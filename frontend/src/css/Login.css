@@ -1,0 +1,86 @@
+/* Page background */
+.login-container {
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: #eef2f7;
+  padding: 20px;
+}
+
+/* White box */
+.login-box {
+  background: white;
+  padding: 40px;
+  width: 100%;
+  max-width: 400px;
+  border-radius: 14px;
+  box-shadow: 0 6px 25px rgba(0, 0, 0, 0.1);
+}
+
+/* Titles */
+.login-title {
+  text-align: center;
+  font-size: 28px;
+  font-weight: 700;
+  color: #1f4fb9;
+  margin-bottom: 10px;
+}
+
+.login-subtitle {
+  text-align: center;
+  font-size: 18px;
+  color: #555;
+  margin-bottom: 25px;
+}
+
+/* Form styles */
+form {
+  display: flex;
+  flex-direction: column;
+}
+
+label {
+  font-size: 14px;
+  color: #333;
+  margin-bottom: 6px;
+}
+
+input {
+  padding: 12px;
+  border: 1px solid #d7d7d7;
+  border-radius: 8px;
+  font-size: 15px;
+  margin-bottom: 20px;
+  transition: border 0.2s ease;
+}
+
+input:focus {
+  border-color: #1f4fb9;
+  outline: none;
+}
+
+/* Button */
+button {
+  background: #1f4fb9;
+  color: white;
+  padding: 12px;
+  border: none;
+  border-radius: 8px;
+  font-size: 16px;
+  cursor: pointer;
+  transition: background 0.25s ease;
+  margin-top: 10px;
+}
+
+button:hover {
+  background: #163a87;
+}
+
+/* Footer */
+.footer-text {
+  text-align: center;
+  margin-top: 25px;
+  font-size: 13px;
+  color: #7a7a7a;
+}
