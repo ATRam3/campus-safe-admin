@@ -10,12 +10,12 @@ const Login = () => {
     e.preventDefault();
 
     try {
-      const response = await api.post("/login", {
+      const response = await api.post("/auth/login", {
         email,
         password,
       });
 
-      console.log(response.data);
+      console.log("response data:", response.data);
     } catch (error) {
       console.error("Login error:", error);
     }

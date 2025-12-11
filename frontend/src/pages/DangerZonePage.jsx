@@ -102,10 +102,15 @@ const initialIncidents = [
     type: "theft",
     time: "2h ago",
     status: "unresolved",
-    zoneId: 1,
-    description: "Student reported phone theft while walking to car",
-    reportedBy: "John Doe",
+    description: "Student reported phone theft while walking to car...",
+    proofImages: ["image1.jpg", "image2.jpg"],
+    location: { lat: 8.8925, lng: 38.808 },
+    reportCount: 5,
+    reportedBy: "Bini",
     reportedAt: "2024-01-22 14:30",
+    severity: "high",
+    zone: "Main Parking Lot",
+    actionsTaken: "Security notified, investigation in progress",
   },
   {
     id: 2,
@@ -113,43 +118,16 @@ const initialIncidents = [
     type: "assault",
     time: "5h ago",
     status: "resolved",
-    zoneId: null,
-    description: "Two students involved in physical altercation",
-    reportedBy: "Cafeteria Staff",
+    description:
+      "Student reported a physical altercation between two students...",
+    proofImages: ["image2.jpg"],
+    location: { lat: 8.8925, lng: 38.808 },
+    reportCount: 10,
+    reportedBy: "Amen",
     reportedAt: "2024-01-22 11:45",
-  },
-  {
-    id: 3,
-    title: "Suspicious person near dorms",
-    type: "suspicious",
-    time: "1d ago",
-    status: "investigating",
-    zoneId: 2,
-    description: "Unknown individual loitering near dorm entrance",
-    reportedBy: "Security Guard",
-    reportedAt: "2024-01-21 22:15",
-  },
-  {
-    id: 4,
-    title: "Vandalism in restroom",
-    type: "vandalism",
-    time: "2d ago",
-    status: "resolved",
-    zoneId: null,
-    description: "Graffiti found in 2nd floor restroom",
-    reportedBy: "Janitor",
-    reportedAt: "2024-01-20 09:20",
-  },
-  {
-    id: 5,
-    title: "Harassment near library",
-    type: "harassment",
-    time: "12h ago",
-    status: "unresolved",
-    zoneId: 3,
-    description: "Student reported verbal harassment",
-    reportedBy: "Anonymous",
-    reportedAt: "2024-01-22 08:45",
+    severity: "low",
+    Zone: "LT",
+    actionsTaken: "Security notified, investigation in progress",
   },
 ];
 
@@ -167,7 +145,9 @@ const DangerZonesPage = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedZone, setSelectedZone] = useState(null);
   const [mapCenter, setMapCenter] = useState({ lat: 8.8913, lng: 38.8089 });
-  const [mapZoom, setMapZoom] = useState(16);
+  const [mapZoom, setMapZoom] = useState(16); // Add these to your existing useState section
+  const [showIncidentDetails, setShowIncidentDetails] = useState(false);
+  const [selectedIncidentDetails, setSelectedIncidentDetails] = useState(null);
 
   // Modal States
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -551,7 +531,7 @@ const DangerZonesPage = () => {
                       }}
                       title="Delete"
                     >
-                      <Trash2 size={14} />
+                      <Trash2 className="icon" size={32} />
                     </button>
                   </div>
                 </div>
@@ -648,7 +628,7 @@ const DangerZonesPage = () => {
                           className="btn btn-small"
                           onClick={() => openDeleteModal(selectedZone)}
                         >
-                          <Trash2 size={14} />
+                          <Trash2 className="icon" size={32} />
                           Delete
                         </button>
                       </div>
@@ -697,57 +677,23 @@ const DangerZonesPage = () => {
             <div className="incidents-list">
               {incidents.map((incident) => (
                 <div key={incident.id} className="incident-item">
-                  <div
-                    className="incident-icon"
-                    style={{
-                      background:
-                        getIncidentStatusColor(incident.status) + "20",
-                      color: getIncidentStatusColor(incident.status),
+                  <div className="incident-icon">⚠️</div>
+                  <div className="incident-content">
+                    <h5>{incident.title}</h5>
+                    <div className="incident-meta">
+                      <span className="incident-type">{incident.type}</span>
+                      <span className="incident-time">{incident.time}</span>
+                    </div>
+                  </div>
+                  <button
+                    className="view-details-btn"
+                    onClick={() => {
+                      setSelectedIncidentDetails(incident);
+                      setShowIncidentDetails(true);
                     }}
                   >
-                    {getIncidentTypeIcon(incident.type)}
-                  </div>
-                  <div className="incident-content">
-                    <div className="incident-header">
-                      <h5>{incident.title}</h5>
-                      <span
-                        className="incident-status"
-                        style={{
-                          background:
-                            getIncidentStatusColor(incident.status) + "20",
-                          color: getIncidentStatusColor(incident.status),
-                        }}
-                      >
-                        {incident.status}
-                      </span>
-                    </div>
-                    <p className="incident-description">
-                      {incident.description}
-                    </p>
-                    <div className="incident-meta">
-                      <span className="incident-type">
-                        <Tag size={12} />
-                        {incident.type}
-                      </span>
-                      <span className="incident-time">
-                        <Clock size={12} />
-                        {incident.time}
-                      </span>
-                      <span className="incident-zone">
-                        <MapPin size={12} />
-                        {getZoneName(incident.zoneId)}
-                      </span>
-                    </div>
-                  </div>
-                  <div className="incident-actions">
-                    <button
-                      className="delete-incident-btn"
-                      onClick={() => openIncidentDeleteModal(incident)}
-                      title="Delete Incident"
-                    >
-                      <Trash2 size={14} />
-                    </button>
-                  </div>
+                    View Details
+                  </button>
                 </div>
               ))}
             </div>
@@ -756,6 +702,101 @@ const DangerZonesPage = () => {
       </div>
 
       {/* CREATE ZONE MODAL */}
+
+      {/* Incident Details Modal */}
+      <Modal
+        isOpen={showIncidentDetails}
+        onClose={() => setShowIncidentDetails(false)}
+        title="Incident Details"
+        size="large"
+      >
+        {selectedIncidentDetails && (
+          <div className="incident-details-modal">
+            <div className="incident-details-modal">
+              {/* Header with status */}
+              <div className="incident-header">
+                <h3>{selectedIncidentDetails.title}</h3>
+                <span
+                  className={`status-badge ${selectedIncidentDetails.status}`}
+                >
+                  {selectedIncidentDetails.status}
+                </span>
+              </div>
+
+              {/* Basic Info Grid */}
+              <div className="info-grid">
+                <div className="info-item">
+                  <span className="label">Type:</span>
+                  <span className="value">{selectedIncidentDetails.type}</span>
+                </div>
+                <div className="info-item">
+                  <span className="label">Reported By:</span>
+                  <span className="value">
+                    {selectedIncidentDetails.reportedBy}
+                  </span>
+                </div>
+                <div className="info-item">
+                  <span className="label">Time:</span>
+                  <span className="value">{selectedIncidentDetails.time}</span>
+                </div>
+                <div className="info-item">
+                  <span className="label">Reports:</span>
+                  <span className="value">
+                    {selectedIncidentDetails.reportCount} reports
+                  </span>
+                </div>
+                <div className="info-item">
+                  <span className="label">Severity:</span>
+                  <span className="value">
+                    {selectedIncidentDetails.severity}
+                  </span>
+                </div>
+                <div className="info-item">
+                  <span className="label">Zone:</span>
+                  <span className="value">{selectedIncidentDetails.zone}</span>
+                </div>
+              </div>
+
+              {/* Location */}
+              <div className="location-section">
+                <h4>📍 Location</h4>
+                <p>Lat: {selectedIncidentDetails.location.lat.toFixed(6)}</p>
+                <p>Lng: {selectedIncidentDetails.location.lng.toFixed(6)}</p>
+              </div>
+
+              {/* Description */}
+              <div className="description-section">
+                <h4>📝 Description</h4>
+                <p>{selectedIncidentDetails.description}</p>
+              </div>
+
+              {/* Actions Taken */}
+              <div className="actions-section">
+                <h4>🛡️ Actions Taken</h4>
+                <p>{selectedIncidentDetails.actionsTaken}</p>
+              </div>
+
+              {/* Proof Images */}
+              {selectedIncidentDetails.proofImages.length > 0 && (
+                <div className="images-section">
+                  <h4>
+                    🖼️ Proof Images (
+                    {selectedIncidentDetails.proofImages.length})
+                  </h4>
+                  <div className="image-grid">
+                    {selectedIncidentDetails.proofImages.map((img, index) => (
+                      <div key={index} className="image-preview">
+                        <img src={img} alt={`Proof ${index + 1}`} />
+                        <button className="view-full-btn">View Full</button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+      </Modal>
       <Modal
         isOpen={showCreateModal}
         onClose={() => setShowCreateModal(false)}
@@ -1106,7 +1147,7 @@ const DangerZonesPage = () => {
                 Cancel
               </button>
               <button className="btn btn-danger" onClick={handleDeleteZone}>
-                <Trash2 size={16} />
+                <Trash2 className="icon" size={32} />
                 Delete Zone
               </button>
             </div>

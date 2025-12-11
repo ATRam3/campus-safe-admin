@@ -890,6 +890,216 @@
   border: 1px solid #e2e8f0;
 }
 
+/* Incident Details Button */
+.view-details-btn {
+  background: #4299e1;
+  color: white;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.view-details-btn:hover {
+  background: #3182ce;
+  transform: translateY(-1px);
+}
+
+/* Incident Details Modal Styles */
+.incident-details-modal {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.incident-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: 16px;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.incident-header h3 {
+  margin: 0;
+  color: #2d3748;
+  font-size: 20px;
+}
+
+.status-badge {
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.status-badge.resolved {
+  background: #34c75920;
+  color: #34c759;
+}
+
+.status-badge.unresolved {
+  background: #ff3b3020;
+  color: #ff3b30;
+}
+
+.status-badge.pending {
+  background: #ff950020;
+  color: #ff9500;
+}
+
+/* Info Grid */
+.info-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+  background: #f8fafc;
+  padding: 20px;
+  border-radius: 12px;
+}
+
+.info-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.label {
+  font-size: 12px;
+  color: #718096;
+  font-weight: 500;
+}
+
+.value {
+  font-size: 14px;
+  color: #2d3748;
+  font-weight: 500;
+}
+
+/* Sections */
+.location-section,
+.description-section,
+.actions-section,
+.images-section {
+  padding: 16px;
+  background: #f8fafc;
+  border-radius: 12px;
+}
+
+.location-section h4,
+.description-section h4,
+.actions-section h4,
+.images-section h4 {
+  margin: 0 0 12px 0;
+  color: #2d3748;
+  font-size: 16px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.description-section p,
+.actions-section p {
+  margin: 0;
+  color: #4a5568;
+  line-height: 1.6;
+  font-size: 14px;
+}
+
+.location-section p {
+  margin: 4px 0;
+  color: #4a5568;
+  font-family: monospace;
+  font-size: 13px;
+}
+
+/* Images Grid */
+.image-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin-top: 12px;
+}
+
+.image-preview {
+  position: relative;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid #e2e8f0;
+}
+
+.image-preview img {
+  width: 100%;
+  height: 120px;
+  object-fit: cover;
+  display: block;
+}
+
+.view-full-btn {
+  position: absolute;
+  bottom: 8px;
+  right: 8px;
+  background: rgba(0, 0, 0, 0.7);
+  color: white;
+  border: none;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.image-preview:hover .view-full-btn {
+  opacity: 1;
+}
+
+/* In your existing .incident-item styles, ensure it has: */
+.incident-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+}
+
+.incident-content {
+  flex: 1;
+  min-width: 0; /* Prevents overflow */
+}
+
+.incident-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 4px;
+}
+
+.incident-header h5 {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: #2d3748;
+  flex: 1;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .info-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .image-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
 /* Responsive */
 @media (max-width: 1200px) {
   .content-grid {

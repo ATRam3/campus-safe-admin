@@ -20,8 +20,8 @@ import DangerZonePage from "./pages/DangerZonePage.jsx";
 
 const RequireAuth = ({ children }) => {
   const token = localStorage.getItem("token");
-  if (false) {
-    return <Navigate to="/login" replace />;
+  if (!token) {
+    return <Navigate to="/login" replace />; // Redirect to login if no token
   }
   return children;
 };
@@ -30,16 +30,10 @@ const App = () => {
   return (
     <Router>
       <Routes>
-        <Route path="/login" element={<Login />} />
+        {/* <Route path="/login" element={<Login />} /> */}
 
         {/* Protected Routes */}
-        <Route
-          element={
-            <RequireAuth>
-              <Layout />
-            </RequireAuth>
-          }
-        >
+        <Route element={<Layout />}>
           <Route path="/" element={<Navigate to="/dashboard" replace />} />
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/danger-zones" element={<DangerZonePage />} />
