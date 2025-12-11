@@ -1,8 +1,8 @@
 import React, { useState } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, Outlet } from "react-router-dom";
 import "../css/Layout.css";
 
-const Layout = ({ children }) => {
+const Layout = () => {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const location = useLocation();
 
@@ -19,6 +19,10 @@ const Layout = ({ children }) => {
 
   const isActive = (path) => location.pathname === path;
 
+  // Detect title based on active route
+  const currentPage = menuItems.find((item) => isActive(item.path));
+  const pageTitle = currentPage ? currentPage.label : "";
+
   return (
     <div className="admin-layout">
       {/* Sidebar */}
@@ -26,12 +30,14 @@ const Layout = ({ children }) => {
         {/* Logo */}
         <div className="sidebar-logo">
           <div className="logo-icon">🛡️</div>
+
           {!sidebarCollapsed && (
             <div className="logo-text">
               <h2>Safe Campus</h2>
               <p>Admin Portal</p>
             </div>
           )}
+
           <button
             className="collapse-btn"
             onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
@@ -49,9 +55,11 @@ const Layout = ({ children }) => {
               className={`menu-item ${isActive(item.path) ? "active" : ""}`}
             >
               <span className="menu-icon">{item.icon}</span>
+
               {!sidebarCollapsed && (
                 <span className="menu-label">{item.label}</span>
               )}
+
               {isActive(item.path) && !sidebarCollapsed && (
                 <div className="active-indicator"></div>
               )}
@@ -69,10 +77,12 @@ const Layout = ({ children }) => {
                   alt="Admin"
                 />
               </div>
+
               <div className="user-info">
                 <h4>Campus Security</h4>
                 <p>Administrator</p>
               </div>
+
               <button className="logout-btn" title="Logout">
                 ↩️
               </button>
@@ -92,22 +102,22 @@ const Layout = ({ children }) => {
             >
               ☰
             </button>
-            <h1 className="page-title">
-              {menuItems.find((item) => isActive(item.path))?.label ||
-                "Dashboard"}
-            </h1>
+
+            <h1 className="page-title">{pageTitle}</h1>
           </div>
+
           <div className="header-right">
             <div className="header-actions">
               <button className="notification-btn">
                 🔔 <span className="notification-count">3</span>
               </button>
               <button className="quick-action-btn">🚨 Emergency</button>
+
               <div className="user-dropdown">
                 <img
                   src="https://api.dicebear.com/7.x/avataaars/svg?seed=Admin"
-                  alt="Admin"
                   className="header-avatar"
+                  alt="Admin"
                 />
                 <span className="username">Admin User</span>
                 <span className="dropdown-arrow">▼</span>
@@ -116,8 +126,10 @@ const Layout = ({ children }) => {
           </div>
         </header>
 
-        {/* Page Content */}
-        <div className="page-content">{children}</div>
+        {/* Page Content Loaded Here */}
+        <div className="page-content">
+          <Outlet />
+        </div>
       </div>
     </div>
   );
