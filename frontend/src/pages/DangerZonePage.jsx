@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from "react";
+import React, { useState, useMemo } from "react";
 import {
   GoogleMap,
   Marker,
@@ -6,7 +6,47 @@ import {
   useLoadScript,
 } from "@react-google-maps/api";
 import "../css/DangerZonePage.css";
-import Modal from "../component/Modal.jsx";
+import Modal from "../component/Modal";
+
+// Import Lucide Icons
+import {
+  MapPin,
+  AlertTriangle,
+  Bell,
+  CheckCircle,
+  Search,
+  Edit2,
+  Trash2,
+  Home,
+  Plus,
+  Minus,
+  Map,
+  X,
+  ShieldAlert,
+  Users,
+  Eye,
+  Link,
+  Filter,
+  Calendar,
+  Clock,
+  Navigation,
+  AlertCircle,
+  Check,
+  ChevronRight,
+  BarChart3,
+  Radio,
+  Type,
+  Loader2,
+  AlertOctagon,
+  Skull,
+  Flame,
+  User,
+  FileText,
+  Tag,
+  Flag,
+  Circle,
+  Square,
+} from "lucide-react";
 
 // Sample data
 const initialZones = [
@@ -135,7 +175,6 @@ const DangerZonesPage = () => {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [showMapModal, setShowMapModal] = useState(false);
   const [showIncidentDeleteModal, setShowIncidentDeleteModal] = useState(false);
-  const [selectedIncident, setSelectedIncident] = useState(null);
   const [zoneToDelete, setZoneToDelete] = useState(null);
   const [incidentToDelete, setIncidentToDelete] = useState(null);
 
@@ -167,18 +206,6 @@ const DangerZonesPage = () => {
     });
   }, [zones, filterSeverity, filterStatus, searchQuery]);
 
-  // Filtered incidents
-  const filteredIncidents = useMemo(() => {
-    return incidents.filter((incident) => {
-      const matchesType = filterStatus === "all" || true; // Simplified for now
-      const matchesSearch =
-        searchQuery === "" ||
-        incident.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        incident.description.toLowerCase().includes(searchQuery.toLowerCase());
-      return matchesType && matchesSearch;
-    });
-  }, [incidents, searchQuery, filterStatus]);
-
   // Get severity color
   const getSeverityColor = (severity) => {
     switch (severity) {
@@ -193,6 +220,20 @@ const DangerZonesPage = () => {
     }
   };
 
+  // Get severity icon
+  const getSeverityIcon = (severity) => {
+    switch (severity) {
+      case "high":
+        return <AlertOctagon className="severity-icon" size={16} />;
+      case "medium":
+        return <AlertTriangle className="severity-icon" size={16} />;
+      case "low":
+        return <AlertCircle className="severity-icon" size={16} />;
+      default:
+        return <Circle className="severity-icon" size={16} />;
+    }
+  };
+
   // Get incident status color
   const getIncidentStatusColor = (status) => {
     switch (status) {
@@ -204,6 +245,24 @@ const DangerZonesPage = () => {
         return "#FF3B30";
       default:
         return "#8E8E93";
+    }
+  };
+
+  // Get incident type icon
+  const getIncidentTypeIcon = (type) => {
+    switch (type) {
+      case "theft":
+        return <ShieldAlert size={14} />;
+      case "assault":
+        return <Users size={14} />;
+      case "harassment":
+        return <User size={14} />;
+      case "vandalism":
+        return <FileText size={14} />;
+      case "suspicious":
+        return <Eye size={14} />;
+      default:
+        return <Flag size={14} />;
     }
   };
 
@@ -252,16 +311,6 @@ const DangerZonesPage = () => {
     if (!zoneToDelete) return;
 
     setZones(zones.filter((zone) => zone.id !== zoneToDelete.id));
-
-    // Also remove this zone from any incidents
-    setIncidents(
-      incidents.map((incident) =>
-        incident.zoneId === zoneToDelete.id
-          ? { ...incident, zoneId: null }
-          : incident
-      )
-    );
-
     setShowDeleteModal(false);
     setZoneToDelete(null);
     setSelectedZone(null);
@@ -327,7 +376,8 @@ const DangerZonesPage = () => {
             className="btn btn-primary"
             onClick={() => setShowCreateModal(true)}
           >
-            📍 Create Danger Zone
+            <Plus className="icon" size={18} />
+            Create Danger Zone
           </button>
         </div>
       </div>
@@ -339,15 +389,17 @@ const DangerZonesPage = () => {
           {/* Quick Stats */}
           <div className="stats-cards">
             <div className="stat-card">
-              <div className="stat-icon">📍</div>
+              <div className="stat-icon">
+                <MapPin size={20} />
+              </div>
               <div className="stat-content">
                 <h3>{zones.length}</h3>
                 <p>Total Zones</p>
               </div>
             </div>
             <div className="stat-card">
-              <div className="stat-icon" style={{ color: "#FF3B30" }}>
-                ⚠️
+              <div className="stat-icon high-risk">
+                <AlertOctagon size={20} />
               </div>
               <div className="stat-content">
                 <h3>{zones.filter((z) => z.severity === "high").length}</h3>
@@ -355,15 +407,17 @@ const DangerZonesPage = () => {
               </div>
             </div>
             <div className="stat-card">
-              <div className="stat-icon">🚨</div>
+              <div className="stat-icon">
+                <Bell size={20} />
+              </div>
               <div className="stat-content">
                 <h3>{incidents.length}</h3>
                 <p>Total Incidents</p>
               </div>
             </div>
             <div className="stat-card">
-              <div className="stat-icon" style={{ color: "#34C759" }}>
-                ✅
+              <div className="stat-icon resolved">
+                <CheckCircle size={20} />
               </div>
               <div className="stat-content">
                 <h3>
@@ -377,7 +431,10 @@ const DangerZonesPage = () => {
           {/* Filters */}
           <div className="filters-section">
             <div className="filter-group">
-              <h4>Quick Filters</h4>
+              <h4>
+                <Filter className="icon" size={16} />
+                Quick Filters
+              </h4>
               <div className="filter-chips">
                 <button
                   className={`filter-chip ${
@@ -394,6 +451,7 @@ const DangerZonesPage = () => {
                   onClick={() => setFilterSeverity("high")}
                   style={{ background: "#FF3B3020", color: "#FF3B30" }}
                 >
+                  <AlertOctagon size={14} />
                   High Risk
                 </button>
                 <button
@@ -403,6 +461,7 @@ const DangerZonesPage = () => {
                   onClick={() => setFilterSeverity("medium")}
                   style={{ background: "#FF950020", color: "#FF9500" }}
                 >
+                  <AlertTriangle size={14} />
                   Medium Risk
                 </button>
                 <button
@@ -412,19 +471,20 @@ const DangerZonesPage = () => {
                   onClick={() => setFilterSeverity("low")}
                   style={{ background: "#34C75920", color: "#34C759" }}
                 >
+                  <AlertCircle size={14} />
                   Low Risk
                 </button>
               </div>
             </div>
 
             <div className="search-box">
+              <Search className="search-icon" size={18} />
               <input
                 type="text"
                 placeholder="Search zones or incidents..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
-              <span className="search-icon">🔍</span>
             </div>
           </div>
 
@@ -450,7 +510,9 @@ const DangerZonesPage = () => {
                   <div
                     className="zone-marker"
                     style={{ background: getSeverityColor(zone.severity) }}
-                  ></div>
+                  >
+                    {getSeverityIcon(zone.severity)}
+                  </div>
                   <div className="zone-content">
                     <div className="zone-header">
                       <h5>{zone.name}</h5>
@@ -458,35 +520,38 @@ const DangerZonesPage = () => {
                     </div>
                     <p className="zone-description">{zone.description}</p>
                     <div className="zone-footer">
-                      <span>⚠️ {zone.incidents} incidents</span>
-                      <span>📏 {zone.radius}m radius</span>
                       <span>
-                        📍 {zone.location.lat.toFixed(4)},{" "}
+                        <AlertTriangle size={12} /> {zone.incidents} incidents
+                      </span>
+                      <span>
+                        <Navigation size={12} /> {zone.radius}m radius
+                      </span>
+                      <span>
+                        <MapPin size={12} /> {zone.location.lat.toFixed(4)},{" "}
                         {zone.location.lng.toFixed(4)}
                       </span>
                     </div>
                   </div>
                   <div className="zone-actions">
                     <button
-                      className="action-btn"
+                      className="action-btn edit"
                       onClick={(e) => {
                         e.stopPropagation();
                         openEditModal(zone);
                       }}
                       title="Edit"
                     >
-                      ✏️
+                      <Edit2 size={14} />
                     </button>
                     <button
-                      className="action-btn"
+                      className="action-btn delete"
                       onClick={(e) => {
                         e.stopPropagation();
                         openDeleteModal(zone);
                       }}
                       title="Delete"
-                      style={{ background: "#FF3B3020", color: "#FF3B30" }}
                     >
-                      🗑️
+                      <Trash2 size={14} />
                     </button>
                   </div>
                 </div>
@@ -499,9 +564,15 @@ const DangerZonesPage = () => {
         <div className="right-panel">
           <div className="map-container">
             {loadError ? (
-              <div className="map-error">Failed to load map</div>
+              <div className="map-error">
+                <AlertCircle size={24} />
+                <p>Failed to load map</p>
+              </div>
             ) : !isLoaded ? (
-              <div className="map-loading">Loading map...</div>
+              <div className="map-loading">
+                <Loader2 className="loading-spinner" size={24} />
+                <p>Loading map...</p>
+              </div>
             ) : (
               <GoogleMap
                 mapContainerStyle={{ width: "100%", height: "100%" }}
@@ -548,6 +619,7 @@ const DangerZonesPage = () => {
                             background: getSeverityColor(selectedZone.severity),
                           }}
                         >
+                          {getSeverityIcon(selectedZone.severity)}
                           {selectedZone.severity}
                         </span>
                         <span className="status-tag">
@@ -556,20 +628,27 @@ const DangerZonesPage = () => {
                       </div>
                       <p>{selectedZone.description}</p>
                       <div className="info-stats">
-                        <span>📊 {selectedZone.incidents} incidents</span>
-                        <span>📍 {selectedZone.radius}m</span>
+                        <span>
+                          <BarChart3 size={12} /> {selectedZone.incidents}{" "}
+                          incidents
+                        </span>
+                        <span>
+                          <Radio size={12} /> {selectedZone.radius}m
+                        </span>
                       </div>
                       <div className="info-actions">
                         <button
                           className="btn btn-small"
                           onClick={() => openEditModal(selectedZone)}
                         >
+                          <Edit2 size={14} />
                           Edit
                         </button>
                         <button
                           className="btn btn-small"
                           onClick={() => openDeleteModal(selectedZone)}
                         >
+                          <Trash2 size={14} />
                           Delete
                         </button>
                       </div>
@@ -586,13 +665,13 @@ const DangerZonesPage = () => {
               className="control-btn"
               onClick={() => setMapZoom(mapZoom + 1)}
             >
-              +
+              <Plus size={20} />
             </button>
             <button
               className="control-btn"
               onClick={() => setMapZoom(mapZoom - 1)}
             >
-              -
+              <Minus size={20} />
             </button>
             <button
               className="control-btn"
@@ -602,18 +681,21 @@ const DangerZonesPage = () => {
                 setSelectedZone(null);
               }}
             >
-              🏛️
+              <Home size={20} />
             </button>
           </div>
 
           {/* Recent Incidents */}
           <div className="incidents-panel">
             <div className="panel-header">
-              <h4>Recent Incidents ({filteredIncidents.length})</h4>
-              <button className="view-all-btn">View All →</button>
+              <h4>Recent Incidents ({incidents.length})</h4>
+              <button className="view-all-btn">
+                View All
+                <ChevronRight size={16} />
+              </button>
             </div>
             <div className="incidents-list">
-              {filteredIncidents.map((incident) => (
+              {incidents.map((incident) => (
                 <div key={incident.id} className="incident-item">
                   <div
                     className="incident-icon"
@@ -623,7 +705,7 @@ const DangerZonesPage = () => {
                       color: getIncidentStatusColor(incident.status),
                     }}
                   >
-                    ⚠️
+                    {getIncidentTypeIcon(incident.type)}
                   </div>
                   <div className="incident-content">
                     <div className="incident-header">
@@ -643,10 +725,17 @@ const DangerZonesPage = () => {
                       {incident.description}
                     </p>
                     <div className="incident-meta">
-                      <span className="incident-type">{incident.type}</span>
-                      <span className="incident-time">{incident.time}</span>
+                      <span className="incident-type">
+                        <Tag size={12} />
+                        {incident.type}
+                      </span>
+                      <span className="incident-time">
+                        <Clock size={12} />
+                        {incident.time}
+                      </span>
                       <span className="incident-zone">
-                        📍 {getZoneName(incident.zoneId)}
+                        <MapPin size={12} />
+                        {getZoneName(incident.zoneId)}
                       </span>
                     </div>
                   </div>
@@ -656,7 +745,7 @@ const DangerZonesPage = () => {
                       onClick={() => openIncidentDeleteModal(incident)}
                       title="Delete Incident"
                     >
-                      🗑️
+                      <Trash2 size={14} />
                     </button>
                   </div>
                 </div>
@@ -675,7 +764,10 @@ const DangerZonesPage = () => {
       >
         <div className="modal-form">
           <div className="form-group">
-            <label>Zone Name *</label>
+            <label>
+              <Type size={16} />
+              Zone Name *
+            </label>
             <input
               type="text"
               value={newZone.name}
@@ -706,6 +798,13 @@ const DangerZonesPage = () => {
                         : getSeverityColor(level),
                   }}
                 >
+                  {level === "high" ? (
+                    <AlertOctagon size={16} />
+                  ) : level === "medium" ? (
+                    <AlertTriangle size={16} />
+                  ) : (
+                    <AlertCircle size={16} />
+                  )}
                   {level.charAt(0).toUpperCase() + level.slice(1)}
                 </button>
               ))}
@@ -714,7 +813,10 @@ const DangerZonesPage = () => {
 
           <div className="form-row">
             <div className="form-group">
-              <label>Radius (meters) *</label>
+              <label>
+                <Radio size={16} />
+                Radius (meters) *
+              </label>
               <input
                 type="range"
                 min="50"
@@ -727,7 +829,10 @@ const DangerZonesPage = () => {
               <div className="range-value">{newZone.radius}m</div>
             </div>
             <div className="form-group">
-              <label>Status *</label>
+              <label>
+                <Flag size={16} />
+                Status *
+              </label>
               <select
                 value={newZone.status}
                 onChange={(e) =>
@@ -742,7 +847,10 @@ const DangerZonesPage = () => {
           </div>
 
           <div className="form-group">
-            <label>Location *</label>
+            <label>
+              <MapPin size={16} />
+              Location *
+            </label>
             <div className="location-selector">
               <div className="location-info">
                 <span>Lat: {newZone.location.lat.toFixed(6)}</span>
@@ -753,7 +861,8 @@ const DangerZonesPage = () => {
                 className="btn btn-secondary"
                 onClick={() => setShowMapModal(true)}
               >
-                📍 Select on Map
+                <Map size={16} />
+                Select on Map
               </button>
             </div>
             <small className="hint">
@@ -762,7 +871,10 @@ const DangerZonesPage = () => {
           </div>
 
           <div className="form-group">
-            <label>Description *</label>
+            <label>
+              <FileText size={16} />
+              Description *
+            </label>
             <textarea
               value={newZone.description}
               onChange={(e) =>
@@ -778,6 +890,7 @@ const DangerZonesPage = () => {
               className="btn btn-secondary"
               onClick={() => setShowCreateModal(false)}
             >
+              <X size={16} />
               Cancel
             </button>
             <button
@@ -785,6 +898,7 @@ const DangerZonesPage = () => {
               onClick={handleCreateZone}
               disabled={!newZone.name.trim() || !newZone.description.trim()}
             >
+              <Check size={16} />
               Create Zone
             </button>
           </div>
@@ -804,7 +918,10 @@ const DangerZonesPage = () => {
         {editZone && (
           <div className="modal-form">
             <div className="form-group">
-              <label>Zone Name *</label>
+              <label>
+                <Type size={16} />
+                Zone Name *
+              </label>
               <input
                 type="text"
                 value={editZone.name}
@@ -839,6 +956,13 @@ const DangerZonesPage = () => {
                           : getSeverityColor(level),
                     }}
                   >
+                    {level === "high" ? (
+                      <AlertOctagon size={16} />
+                    ) : level === "medium" ? (
+                      <AlertTriangle size={16} />
+                    ) : (
+                      <AlertCircle size={16} />
+                    )}
                     {level.charAt(0).toUpperCase() + level.slice(1)}
                   </button>
                 ))}
@@ -847,7 +971,10 @@ const DangerZonesPage = () => {
 
             <div className="form-row">
               <div className="form-group">
-                <label>Radius (meters) *</label>
+                <label>
+                  <Radio size={16} />
+                  Radius (meters) *
+                </label>
                 <input
                   type="range"
                   min="50"
@@ -863,7 +990,10 @@ const DangerZonesPage = () => {
                 <div className="range-value">{editZone.radius}m</div>
               </div>
               <div className="form-group">
-                <label>Status *</label>
+                <label>
+                  <Flag size={16} />
+                  Status *
+                </label>
                 <select
                   value={editZone.status}
                   onChange={(e) =>
@@ -878,7 +1008,10 @@ const DangerZonesPage = () => {
             </div>
 
             <div className="form-group">
-              <label>Location *</label>
+              <label>
+                <MapPin size={16} />
+                Location *
+              </label>
               <div className="location-selector">
                 <div className="location-info">
                   <span>Lat: {editZone.location.lat.toFixed(6)}</span>
@@ -889,7 +1022,8 @@ const DangerZonesPage = () => {
                   className="btn btn-secondary"
                   onClick={() => setShowMapModal(true)}
                 >
-                  📍 Change Location
+                  <Map size={16} />
+                  Change Location
                 </button>
               </div>
               <small className="hint">
@@ -898,7 +1032,10 @@ const DangerZonesPage = () => {
             </div>
 
             <div className="form-group">
-              <label>Description *</label>
+              <label>
+                <FileText size={16} />
+                Description *
+              </label>
               <textarea
                 value={editZone.description}
                 onChange={(e) =>
@@ -909,35 +1046,6 @@ const DangerZonesPage = () => {
               />
             </div>
 
-            <div className="form-group">
-              <label>Incident Types</label>
-              <div className="type-tags">
-                {[
-                  "theft",
-                  "assault",
-                  "harassment",
-                  "vandalism",
-                  "suspicious",
-                ].map((type) => (
-                  <button
-                    key={type}
-                    type="button"
-                    className={`type-tag ${
-                      editZone.types?.includes(type) ? "selected" : ""
-                    }`}
-                    onClick={() => {
-                      const newTypes = editZone.types?.includes(type)
-                        ? editZone.types.filter((t) => t !== type)
-                        : [...(editZone.types || []), type];
-                      setEditZone({ ...editZone, types: newTypes });
-                    }}
-                  >
-                    {type}
-                  </button>
-                ))}
-              </div>
-            </div>
-
             <div className="modal-actions">
               <button
                 className="btn btn-secondary"
@@ -946,6 +1054,7 @@ const DangerZonesPage = () => {
                   setEditZone(null);
                 }}
               >
+                <X size={16} />
                 Cancel
               </button>
               <button
@@ -953,6 +1062,7 @@ const DangerZonesPage = () => {
                 onClick={handleEditZone}
                 disabled={!editZone.name.trim() || !editZone.description.trim()}
               >
+                <Check size={16} />
                 Save Changes
               </button>
             </div>
@@ -972,7 +1082,9 @@ const DangerZonesPage = () => {
       >
         {zoneToDelete && (
           <div className="delete-confirmation">
-            <div className="warning-icon">⚠️</div>
+            <div className="warning-icon">
+              <AlertTriangle size={48} />
+            </div>
             <h4>Delete Danger Zone</h4>
             <p>
               Are you sure you want to delete{" "}
@@ -990,9 +1102,11 @@ const DangerZonesPage = () => {
                   setZoneToDelete(null);
                 }}
               >
+                <X size={16} />
                 Cancel
               </button>
               <button className="btn btn-danger" onClick={handleDeleteZone}>
+                <Trash2 size={16} />
                 Delete Zone
               </button>
             </div>
@@ -1012,7 +1126,9 @@ const DangerZonesPage = () => {
       >
         {incidentToDelete && (
           <div className="delete-confirmation">
-            <div className="warning-icon">⚠️</div>
+            <div className="warning-icon">
+              <AlertTriangle size={48} />
+            </div>
             <h4>Delete Incident Report</h4>
             <p>
               Are you sure you want to delete{" "}
@@ -1027,9 +1143,11 @@ const DangerZonesPage = () => {
                   setIncidentToDelete(null);
                 }}
               >
+                <X size={16} />
                 Cancel
               </button>
               <button className="btn btn-danger" onClick={handleDeleteIncident}>
+                <Trash2 size={16} />
                 Delete Incident
               </button>
             </div>
@@ -1104,7 +1222,10 @@ const DangerZonesPage = () => {
                 />
               </GoogleMap>
             ) : (
-              <div className="map-loading">Loading map...</div>
+              <div className="map-loading">
+                <Loader2 className="loading-spinner" size={24} />
+                <p>Loading map...</p>
+              </div>
             )}
           </div>
 
@@ -1113,12 +1234,14 @@ const DangerZonesPage = () => {
               className="btn btn-secondary"
               onClick={() => setShowMapModal(false)}
             >
+              <X size={16} />
               Cancel
             </button>
             <button
               className="btn btn-primary"
               onClick={() => setShowMapModal(false)}
             >
+              <Check size={16} />
               Use This Location
             </button>
           </div>

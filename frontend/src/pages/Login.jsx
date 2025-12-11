@@ -1,4 +1,4 @@
-/* import React, { useState } from "react";
+import React, { useState } from "react";
 import "../css/Login.css"; // import the CSS file
 import api from "../services/api";
 
@@ -53,15 +53,6 @@ const Login = () => {
       </div>
     </div>
   );
-};
-
-export default Login;
- */
-
-import React from "react";
-
-const Login = () => {
-  return <div></div>;
 };
 
 export default Login;

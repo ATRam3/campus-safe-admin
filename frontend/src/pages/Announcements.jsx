@@ -265,27 +265,7 @@ const Announcements = () => {
             <p>Scheduled</p>
           </div>
         </div>
-        <div className="stats-card">
-          <div
-            className="stat-icon"
-            style={{ background: "#34C75920", color: "#34C759" }}
-          >
-            👁️
-          </div>
-          <div className="stat-info">
-            <h3>
-              {announcements
-                .filter((a) => a.status === "sent")
-                .reduce((total, a) => total + getOpenRate(a), 0) /
-                Math.max(
-                  announcements.filter((a) => a.status === "sent").length,
-                  1
-                )}
-              %
-            </h3>
-            <p>Average Open Rate</p>
-          </div>
-        </div>
+
         <div className="stats-card">
           <div
             className="stat-icon"
@@ -301,15 +281,16 @@ const Announcements = () => {
       </div>
 
       {/* Main Content */}
-      <div className="content-grid">
+      <div className="announcements-content-grid">
         {/* Left Panel - Recent Announcements */}
-        <div className="left-panel">
+        <div className="announcements-left-panel">
           <div className="panel-header">
             <h3>Recent Announcements</h3>
             <div className="controls">
               <div className="search-box">
                 <input
                   type="text"
+                  name=""
                   placeholder="Search announcements..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
@@ -372,7 +353,7 @@ const Announcements = () => {
         </div>
 
         {/* Right Panel - Selected Announcement Details */}
-        <div className="right-panel">
+        <div className="announcements-right-panel">
           {selectedAnnouncement ? (
             <div className="announcement-details">
               <div className="details-header">
@@ -412,26 +393,6 @@ const Announcements = () => {
                   <div className="stat-label">Sent To</div>
                   <div className="stat-value">
                     {selectedAnnouncement.sentCount.toLocaleString()}
-                  </div>
-                </div>
-                <div className="stat-box">
-                  <div className="stat-label">Opened By</div>
-                  <div className="stat-value">
-                    {selectedAnnouncement.openedCount.toLocaleString()}
-                  </div>
-                </div>
-                <div className="stat-box">
-                  <div className="stat-label">Open Rate</div>
-                  <div
-                    className="stat-value"
-                    style={{
-                      color:
-                        getOpenRate(selectedAnnouncement) > 50
-                          ? "#34C759"
-                          : "#FF9500",
-                    }}
-                  >
-                    {getOpenRate(selectedAnnouncement)}%
                   </div>
                 </div>
               </div>
