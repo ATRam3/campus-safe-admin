@@ -298,12 +298,12 @@ const DangerZonesPage = () => {
   const handleEditZone = async () => {
     if (!editZone) return;
     try {
-      const response = await api.put(`/dangerArea/${editZone.id}`, editZone);
+      const response = await api.put(`/dangerArea/${editZone._id}`, editZone);
       const updatedZone = response.data.data;
 
       setZones(
         zones.map((zone) =>
-          zone.id === editZone.id
+          zone._id === editZone._id
             ? {
                 ...updatedZone,
                 updatedAt: new Date().toISOString().split("T")[0],
@@ -319,34 +319,44 @@ const DangerZonesPage = () => {
   };
 
   // Handle zone deletion
-  const handleDeleteZone = () => {
+  const handleDeleteZone = async () => {  // Add async
+  if (!zoneToDelete) return;
 
-    if (!zoneToDelete) return;
-
-    try{ 
-      const response = api.delete(`/dangerArea/${zoneToDelete.id}`);
-      setZones(zones.filter((zone) => zone.id !== zoneToDelete.id));  
-      setShowDeleteModal(false);
-      setZoneToDelete(null);
-    } catch (error){      
-      console.error("Error deleting danger zone:", error);
-    }
-
+  try { 
+    const response = await api.delete(`/dangerArea/${zoneToDelete._id}`);  // Add await
     
+    console.log("Delete response:", response.data);  // Add logging
+    
+    // Only remove from UI if backend succeeded
+    if (response.data.success) {
+      setZones(zones.filter((zone) => zone._id !== zoneToDelete._id));
+    } else {
+      throw new Error(response.data.message || "Delete failed");
+    }
+    
+    setShowDeleteModal(false);
+    setZoneToDelete(null);
+  } catch (error) {      
+      console.error("Error deleting danger zone:", error);
+      console.error("Error response:", error.response?.data);
+      alert("Failed to delete: " + (error.response?.data?.message || error.message));
+      // Don't remove from UI since backend failed
+    }
   };
 
   // Handle incident deletion
-  const handleDeleteIncident = () => {
+  const handleDeleteIncident = async() => {
     if (!incidentToDelete) return;
+    try {
+      const response = await api.delete(`/incident/${incidentToDelete._id}`);
+      setIncidents( incidents.filter((incident) => incident._id !== incidentToDelete._id));
+      setShowIncidentDeleteModal(false);
+      setIncidentToDelete(null);
+    } catch (error) {
+      console.error("Error deleting incident:", error);
+    }
 
-    const response = api.delete(`/incidents/${incidentToDelete.id}`);
-    setIncidents()
-
-    setIncidents(
-      incidents.filter((incident) => incident.id !== incidentToDelete.id)
-    );
-    setShowIncidentDeleteModal(false);
-    setIncidentToDelete(null);
+    
   };
 
   // Handle map click for location selection
