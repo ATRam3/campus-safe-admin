@@ -8,15 +8,16 @@ import {
 import "../css/DangerZonePage.css";
 import Modal from "../component/Modal";
 import api from "../services/api";
+import { Formik, Form, Field, ErrorMessage } from "formik";
+import { ZoneValidationSchema } from "../validation/ZoneSchema";
 
-// Import Lucide Icons
+// Import only needed icons
 import {
   MapPin,
   AlertTriangle,
   Bell,
   CheckCircle,
   Search,
-  Edit2,
   Trash2,
   Home,
   Plus,
@@ -25,114 +26,22 @@ import {
   X,
   ShieldAlert,
   Users,
-  Eye,
-  Link,
-  Filter,
-  Calendar,
-  Clock,
-  Navigation,
+  User,
+  FileText,
+  Flag,
+  Loader2,
+  AlertOctagon,
   AlertCircle,
   Check,
   ChevronRight,
   BarChart3,
   Radio,
   Type,
-  Loader2,
-  AlertOctagon,
-  Skull,
-  Flame,
-  User,
-  FileText,
-  Tag,
-  Flag,
-  Circle,
-  Square,
+  Navigation,
+  Filter,
 } from "lucide-react";
 
-// Sample data
-/* const initialZones = [
-  {
-    id: 1,
-    name: "Main Parking Lot",
-    location: { lat: 8.8925, lng: 38.808 },
-    severity: "high",
-    description: "Poor lighting and multiple theft incidents reported",
-    incidents: 5,
-    status: "active",
-    radius: 150,
-    types: ["theft", "assault"],
-    lastIncident: "2 hours ago",
-    createdAt: "2024-01-15",
-    updatedAt: "2024-01-20",
-  },
-  {
-    id: 2,
-    name: "North Dorms Alley",
-    location: { lat: 8.893, lng: 38.807 },
-    severity: "medium",
-    description: "Poorly lit pathway with reported harassment cases",
-    incidents: 3,
-    status: "active",
-    radius: 100,
-    types: ["harassment", "theft"],
-    lastIncident: "1 day ago",
-    createdAt: "2024-01-18",
-    updatedAt: "2024-01-22",
-  },
-  {
-    id: 3,
-    name: "Library Back Entrance",
-    location: { lat: 8.891, lng: 38.809 },
-    severity: "low",
-    description: "Occasional suspicious activity",
-    incidents: 1,
-    status: "active",
-    radius: 80,
-    types: ["suspicious"],
-    lastIncident: "3 days ago",
-    createdAt: "2024-01-20",
-    updatedAt: "2024-01-22",
-  },
-];
-*/
-// Sample incidents data
-const initialIncidents = [
-  {
-    id: 1,
-    title: "Phone stolen near parking",
-    type: "theft",
-    time: "2h ago",
-    status: "unresolved",
-    description: "Student reported phone theft while walking to car...",
-    proofImages: ["image1.jpg", "image2.jpg"],
-    location: { lat: 8.8925, lng: 38.808 },
-    reportCount: 5,
-    reportedBy: "Bini",
-    reportedAt: "2024-01-22 14:30",
-    severity: "high",
-    zone: "Main Parking Lot",
-    actionsTaken: "Security notified, investigation in progress",
-  },
-  {
-    id: 2,
-    title: "Fight reported at cafeteria",
-    type: "assault",
-    time: "5h ago",
-    status: "resolved",
-    description:
-      "Student reported a physical altercation between two students...",
-    proofImages: ["image2.jpg"],
-    location: { lat: 8.8925, lng: 38.808 },
-    reportCount: 10,
-    reportedBy: "Amen",
-    reportedAt: "2024-01-22 11:45",
-    severity: "low",
-    Zone: "LT",
-    actionsTaken: "Security notified, investigation in progress",
-  },
-];
-
-const DangerZonesPage = () => {
+const DangerZonePage = () => {
   const { isLoaded, loadError } = useLoadScript({
     googleMapsApiKey: "AIzaSyDGOfKLp0FxNKr6BxKHlJPKDcBWji1uGWI",
     libraries: ["places"],
@@ -140,36 +49,34 @@ const DangerZonesPage = () => {
 
   // State Management
   const [zones, setZones] = useState([]);
-  const [incidents, setIncidents] = useState(initialIncidents);
+  const [incidents, setIncidents] = useState([]);
+  // Card configuration fetched from DB (optional). If absent, defaults are used.
+  const [cardConfig, setCardConfig] = useState(null);
   const [filterSeverity, setFilterSeverity] = useState("all");
-  const [filterStatus, setFilterStatus] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedZone, setSelectedZone] = useState(null);
   const [mapCenter, setMapCenter] = useState({ lat: 8.8913, lng: 38.8089 });
-  const [mapZoom, setMapZoom] = useState(16); // Add these to your existing useState section
+  const [mapZoom, setMapZoom] = useState(16);
   const [showIncidentDetails, setShowIncidentDetails] = useState(false);
   const [selectedIncidentDetails, setSelectedIncidentDetails] = useState(null);
 
   // Modal States
   const [showCreateModal, setShowCreateModal] = useState(false);
-  const [showEditModal, setShowEditModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [showMapModal, setShowMapModal] = useState(false);
-  const [showIncidentDeleteModal, setShowIncidentDeleteModal] = useState(false);
   const [zoneToDelete, setZoneToDelete] = useState(null);
-  const [incidentToDelete, setIncidentToDelete] = useState(null);
+  const [selectedLocation, setSelectedLocation] = useState({ lat: 8.8913, lng: 38.8089 });
 
   // Error state
   const [error, setError] = useState(null);
 
+  // Fetch zones on mount
   useEffect(() => {
     const fetchZones = async () => {
       try {
-        // Fetch zones from API
         const response = await api.get("/dangerArea");
-        console.log("zones", response.data.data);
-
-        setZones(response.data.data);
+        setZones(response.data.data || []);
+        console.log("Fetched zones:", response.data.data);
       } catch (error) {
         setError("Failed to load danger zones.");
         console.error("Error fetching danger zones:", error);
@@ -179,226 +86,153 @@ const DangerZonesPage = () => {
     fetchZones();
   }, []);
 
-  // Form States
-  const [newZone, setNewZone] = useState({
-    name: "",
-    severity: "medium",
-    description: "",
-    radius: 100,
-    status: "active",
-    types: [],
-    location: { lat: 8.8913, lng: 38.8089 },
-  });
+  // Fetch incidents on mount
+  useEffect(() => {
+    const fetchIncidents = async () => {
+      try {
+        const response = await api.get("/report");
+        // Ensure we always set an array
+        const data = response?.data?.data;
+        setIncidents(Array.isArray(data) ? data : []);
+      } catch (error) {
+        console.error("Error fetching incidents:", error);
+      }
+    };
+    
+    fetchIncidents();
+  }, []);
 
-  const [editZone, setEditZone] = useState(null);
+  // Optional: fetch card config from backend so icons/labels can be edited in DB
+  useEffect(() => {
+    const fetchCardConfig = async () => {
+      try {
+        const res = await api.get("/settings/dangerCards"); // endpoint optional; return format: { severities: [{ key:'high', label:'High Risk', icon:'AlertOctagon', color:'#FF3B30' }, ...] }
+        setCardConfig(res?.data?.data || null);
+      } catch (err) {
+        // If endpoint doesn't exist, fallback to defaults silently
+        setCardConfig(null);
+      }
+    };
+    fetchCardConfig();
+  }, []);
+
+  // Precompute severity counts from zones
+  const severityCounts = useMemo(() => {
+    const counts = { high: 0, medium: 0, low: 0 };
+    zones.forEach((z) => {
+      if (z && z.severity) counts[z.severity] = (counts[z.severity] || 0) + 1;
+    });
+    return counts;
+  }, [zones]);
+
+  // Map icon name (from DB) to actual component
+  const iconMap = {
+    AlertOctagon,
+    AlertTriangle,
+    AlertCircle,
+    MapPin,
+    Bell,
+    CheckCircle,
+  };
 
   // Filtered zones
   const filteredZones = useMemo(() => {
     return zones.filter((zone) => {
-      const matchesSeverity =
-        filterSeverity === "all" || zone.severity === filterSeverity;
-      const matchesStatus =
-        filterStatus === "all" || zone.status === filterStatus;
-      const matchesSearch =
-        searchQuery === "" ||
+      const matchesSeverity = filterSeverity === "all" || zone.severity === filterSeverity;
+      const matchesSearch = searchQuery === "" ||
         zone.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         zone.description.toLowerCase().includes(searchQuery.toLowerCase());
-      return matchesSeverity && matchesStatus && matchesSearch;
+      return matchesSeverity && matchesSearch;
     });
-  }, [zones, filterSeverity, filterStatus, searchQuery]);
+  }, [zones, filterSeverity, searchQuery]);
 
-  // Get severity color
+  // Helper functions
   const getSeverityColor = (severity) => {
     switch (severity) {
-      case "high":
-        return "#FF3B30";
-      case "medium":
-        return "#FF9500";
-      case "low":
-        return "#34C759";
-      default:
-        return "#8E8E93";
+      case "high": return "#FF3B30";
+      case "medium": return "#FF9500";
+      case "low": return "#34C759";
+      default: return "#8E8E93";
     }
   };
 
-  // Get severity icon
   const getSeverityIcon = (severity) => {
     switch (severity) {
-      case "high":
-        return <AlertOctagon className="severity-icon" size={16} />;
-      case "medium":
-        return <AlertTriangle className="severity-icon" size={16} />;
-      case "low":
-        return <AlertCircle className="severity-icon" size={16} />;
-      default:
-        return <Circle className="severity-icon" size={16} />;
+      case "high": return <AlertOctagon className="severity-icon" size={16} />;
+      case "medium": return <AlertTriangle className="severity-icon" size={16} />;
+      case "low": return <AlertCircle className="severity-icon" size={16} />;
+      default: return null;
     }
   };
 
-  // Get incident status color
-  const getIncidentStatusColor = (status) => {
-    switch (status) {
-      case "resolved":
-        return "#34C759";
-      case "investigating":
-        return "#FF9500";
-      case "unresolved":
-        return "#FF3B30";
-      default:
-        return "#8E8E93";
-    }
-  };
-
-  // Get incident type icon
-  const getIncidentTypeIcon = (type) => {
-    switch (type) {
-      case "theft":
-        return <ShieldAlert size={14} />;
-      case "assault":
-        return <Users size={14} />;
-      case "harassment":
-        return <User size={14} />;
-      case "vandalism":
-        return <FileText size={14} />;
-      case "suspicious":
-        return <Eye size={14} />;
-      default:
-        return <Flag size={14} />;
-    }
-  };
-
-  // Handle zone creation
-  const handleCreateZone = async (e) => {
-    e.preventDefault();
+  // Handle zone creation with Formik
+  const handleCreateZoneSubmit = async (values, { setSubmitting, resetForm }) => {
     try {
-      const token = localStorage.getItem("token");
-      const response = await api.post("/dangerArea", newZone, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      
+      // Format data for API
+      const zoneData = {
+        name: values.name,
+        severity: values.severity,
+        description: values.description,
+        status: values.status,
+        radius: values.radius,
+        location: {
+          coordinates: [values.location.lng, values.location.lat],
+          type: "Point"
+        }
+      };
+      
+      console.log("Creating zone:", zoneData);
+      
+      const response = await api.post("/dangerArea", zoneData);
 
       const createdZone = response.data.data;
-      setZones([...zones, createdZone]);
+      setZones(prev => [...prev, createdZone]);
       setShowCreateModal(false);
-      // Reset new zone form
-      setNewZone({
-        name: "",
-        severity: "medium",
-        description: "",
-        radius: 100,
-        status: "active",
-        types: [],
-        location: { lat: 8.8913, lng: 38.8089 },
-      });
+      resetForm();
+      setSelectedLocation({ lat: 8.8913, lng: 38.8089 });
+      
     } catch (error) {
       console.error("Error creating danger zone:", error);
-    }
-  };
-
-  // Handle zone edit
-  const handleEditZone = async () => {
-    if (!editZone) return;
-    try {
-      const response = await api.put(`/dangerArea/${editZone._id}`, editZone);
-      const updatedZone = response.data.data;
-
-      setZones(
-        zones.map((zone) =>
-          zone._id === editZone._id
-            ? {
-                ...updatedZone,
-                updatedAt: new Date().toISOString().split("T")[0],
-              }
-            : zone
-        )
-      );
-      setShowEditModal(false);
-      setEditZone(null);
-    } catch (error) {
-      console.error("Error updating danger zone:", error);
+      alert(`Failed to create zone: ${error.response?.data?.message || error.message}`);
+    } finally {
+      setSubmitting(false);
     }
   };
 
   // Handle zone deletion
-  const handleDeleteZone = async () => {  // Add async
-  if (!zoneToDelete) return;
-
-  try { 
-    const response = await api.delete(`/dangerArea/${zoneToDelete._id}`);  // Add await
+  const handleDeleteZone = async () => {
+    if (!zoneToDelete) return;
     
-    console.log("Delete response:", response.data);  // Add logging
-    
-    // Only remove from UI if backend succeeded
-    if (response.data.success) {
-      setZones(zones.filter((zone) => zone._id !== zoneToDelete._id));
-    } else {
-      throw new Error(response.data.message || "Delete failed");
-    }
-    
-    setShowDeleteModal(false);
-    setZoneToDelete(null);
-  } catch (error) {      
-      console.error("Error deleting danger zone:", error);
-      console.error("Error response:", error.response?.data);
-      alert("Failed to delete: " + (error.response?.data?.message || error.message));
-      // Don't remove from UI since backend failed
-    }
-  };
-
-  // Handle incident deletion
-  const handleDeleteIncident = async() => {
-    if (!incidentToDelete) return;
     try {
-      const response = await api.delete(`/incident/${incidentToDelete._id}`);
-      setIncidents( incidents.filter((incident) => incident._id !== incidentToDelete._id));
-      setShowIncidentDeleteModal(false);
-      setIncidentToDelete(null);
+      const response = await api.delete(`/dangerArea/${zoneToDelete._id}`);
+      
+      if (response.data.success) {
+        setZones(zones.filter((zone) => zone._id !== zoneToDelete._id));
+      } else {
+        throw new Error(response.data.message || "Delete failed");
+      }
+      
+      setShowDeleteModal(false);
+      setZoneToDelete(null);
+      setSelectedZone(null);
     } catch (error) {
-      console.error("Error deleting incident:", error);
+      console.error("Error deleting danger zone:", error);
+      alert("Failed to delete: " + (error.response?.data?.message || error.message));
     }
-
-    
   };
 
   // Handle map click for location selection
   const handleMapClick = (e) => {
     const lat = e.latLng.lat();
     const lng = e.latLng.lng();
-
-    if (showCreateModal) {
-      setNewZone({ ...newZone, location: { lat, lng } });
-    } else if (showEditModal && editZone) {
-      setEditZone({ ...editZone, location: { lat, lng } });
-    }
-  };
-
-  // Initialize edit form
-  const openEditModal = (zone) => {
-    setEditZone({
-      ...zone,
-      location: {
-        lat: zone.location.coordinates[1],
-        lng: zone.location.coordinates[0],
-      },
-    });
-    setShowEditModal(true);
+    setSelectedLocation({ lat, lng });
   };
 
   // Initialize delete confirmation
   const openDeleteModal = (zone) => {
     setZoneToDelete(zone);
     setShowDeleteModal(true);
-  };
-
-  // Initialize incident delete confirmation
-  const openIncidentDeleteModal = (incident) => {
-    setIncidentToDelete(incident);
-    setShowIncidentDeleteModal(true);
-  };
-
-  // Get zone name by ID
-  const getZoneName = (zoneId) => {
-    const zone = zones.find((z) => z.id === zoneId);
-    return zone ? zone.name : "No zone linked";
   };
 
   return (
@@ -426,6 +260,7 @@ const DangerZonesPage = () => {
         <div className="left-panel">
           {/* Quick Stats */}
           <div className="stats-cards">
+            {/* Total zones - always shown */}
             <div className="stat-card">
               <div className="stat-icon">
                 <MapPin size={20} />
@@ -435,15 +270,29 @@ const DangerZonesPage = () => {
                 <p>Total Zones</p>
               </div>
             </div>
-            <div className="stat-card">
-              <div className="stat-icon high-risk">
-                <AlertOctagon size={20} />
-              </div>
-              <div className="stat-content">
-                <h3>{zones.filter((z) => z.severity === "high").length}</h3>
-                <p>High Risk</p>
-              </div>
-            </div>
+
+            {/* Severity cards: read config from DB if available, otherwise use defaults */}
+            {(cardConfig?.severities || [
+              { key: "high", label: "High Risk", icon: "AlertOctagon", color: "#FF3B30" },
+              { key: "medium", label: "Medium Risk", icon: "AlertTriangle", color: "#FF9500" },
+              { key: "low", label: "Low Risk", icon: "AlertCircle", color: "#34C759" },
+            ]).map((cfg) => {
+              const IconComp = iconMap[cfg.icon] || AlertCircle;
+              const count = severityCounts[cfg.key] || 0;
+              return (
+                <div key={cfg.key} className="stat-card">
+                  <div className="stat-icon" style={{ background: (cfg.color || getSeverityColor(cfg.key)) + "20" }}>
+                    <IconComp size={20} />
+                  </div>
+                  <div className="stat-content">
+                    <h3>{count}</h3>
+                    <p>{cfg.label}</p>
+                  </div>
+                </div>
+              );
+            })}
+
+            {/* Incidents and resolved */}
             <div className="stat-card">
               <div className="stat-icon">
                 <Bell size={20} />
@@ -458,9 +307,7 @@ const DangerZonesPage = () => {
                 <CheckCircle size={20} />
               </div>
               <div className="stat-content">
-                <h3>
-                  {incidents.filter((i) => i.status === "resolved").length}
-                </h3>
+                <h3>{incidents?.filter((i) => i.status === "resolved").length || 0}</h3>
                 <p>Resolved</p>
               </div>
             </div>
@@ -475,17 +322,13 @@ const DangerZonesPage = () => {
               </h4>
               <div className="filter-chips">
                 <button
-                  className={`filter-chip ${
-                    filterSeverity === "all" ? "active" : ""
-                  }`}
+                  className={`filter-chip ${filterSeverity === "all" ? "active" : ""}`}
                   onClick={() => setFilterSeverity("all")}
                 >
                   All Zones
                 </button>
                 <button
-                  className={`filter-chip ${
-                    filterSeverity === "high" ? "active" : ""
-                  }`}
+                  className={`filter-chip ${filterSeverity === "high" ? "active" : ""}`}
                   onClick={() => setFilterSeverity("high")}
                   style={{ background: "#FF3B3020", color: "#FF3B30" }}
                 >
@@ -493,9 +336,7 @@ const DangerZonesPage = () => {
                   High Risk
                 </button>
                 <button
-                  className={`filter-chip ${
-                    filterSeverity === "medium" ? "active" : ""
-                  }`}
+                  className={`filter-chip ${filterSeverity === "medium" ? "active" : ""}`}
                   onClick={() => setFilterSeverity("medium")}
                   style={{ background: "#FF950020", color: "#FF9500" }}
                 >
@@ -503,9 +344,7 @@ const DangerZonesPage = () => {
                   Medium Risk
                 </button>
                 <button
-                  className={`filter-chip ${
-                    filterSeverity === "low" ? "active" : ""
-                  }`}
+                  className={`filter-chip ${filterSeverity === "low" ? "active" : ""}`}
                   onClick={() => setFilterSeverity("low")}
                   style={{ background: "#34C75920", color: "#34C759" }}
                 >
@@ -530,15 +369,12 @@ const DangerZonesPage = () => {
           <div className="zone-list-container">
             <div className="zone-list-header">
               <h4>Danger Zones ({filteredZones.length})</h4>
-              <span className="sort-option">Newest ↓</span>
             </div>
             <div className="zone-list">
               {filteredZones.map((zone) => (
                 <div
-                  key={zone.id}
-                  className={`zone-item ${
-                    selectedZone?.id === zone.id ? "selected" : ""
-                  }`}
+                  key={zone._id}
+                  className={`zone-item ${selectedZone?._id === zone._id ? "selected" : ""}`}
                   onClick={() => {
                     setSelectedZone(zone);
                     setMapCenter({
@@ -556,35 +392,25 @@ const DangerZonesPage = () => {
                   </div>
                   <div className="zone-content">
                     <div className="zone-header">
-                      <h5>{zone.name}</h5>
+                      <h5 style={{ color: "black" }}>{zone.name}</h5>
                       <span className="zone-status">{zone.status}</span>
                     </div>
                     <p className="zone-description">{zone.description}</p>
                     <div className="zone-footer">
                       <span>
-                        <AlertTriangle size={12} /> {zone.incidents} incidents
+                        <AlertTriangle size={12} /> {zone.incidents || 0} incidents
                       </span>
                       <span>
                         <Navigation size={12} /> {zone.radius}m radius
                       </span>
                       <span>
-                        <MapPin size={12} />{" "}
-                        {zone?.location?.coordinates[1].toFixed(4)},{" "}
-                        {zone?.location?.coordinates[0].toFixed(4)}
+                        <MapPin size={12} />
+                        {zone?.location?.coordinates[1]?.toFixed(4) || "N/A"},{" "}
+                        {zone?.location?.coordinates[0]?.toFixed(4) || "N/A"}
                       </span>
                     </div>
                   </div>
                   <div className="zone-actions">
-                    <button
-                      className="action-btn edit"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        openEditModal(zone);
-                      }}
-                      title="Edit"
-                    >
-                      <Edit2 size={14} />
-                    </button>
                     <button
                       className="action-btn delete"
                       onClick={(e) => {
@@ -592,8 +418,9 @@ const DangerZonesPage = () => {
                         openDeleteModal(zone);
                       }}
                       title="Delete"
+                      aria-label="Delete zone"
                     >
-                      <Trash2 className="icon" size={32} />
+                      <Trash2 size={30} />
                     </button>
                   </div>
                 </div>
@@ -629,7 +456,7 @@ const DangerZonesPage = () => {
                 {/* Markers */}
                 {zones.map((zone) => (
                   <Marker
-                    key={zone.id}
+                    key={zone._id}
                     position={{
                       lat: zone.location.coordinates[1],
                       lng: zone.location.coordinates[0],
@@ -644,7 +471,10 @@ const DangerZonesPage = () => {
                     }}
                     onClick={() => {
                       setSelectedZone(zone);
-                      setMapCenter(zone.location);
+                      setMapCenter({
+                        lat: zone.location.coordinates[1],
+                        lng: zone.location.coordinates[0],
+                      });
                     }}
                   />
                 ))}
@@ -677,28 +507,12 @@ const DangerZonesPage = () => {
                       <p>{selectedZone.description}</p>
                       <div className="info-stats">
                         <span>
-                          <BarChart3 size={12} /> {selectedZone.incidents}{" "}
+                          <BarChart3 size={12} /> {selectedZone.incidents || 0}{" "}
                           incidents
                         </span>
                         <span>
                           <Radio size={12} /> {selectedZone.radius}m
                         </span>
-                      </div>
-                      <div className="info-actions">
-                        <button
-                          className="btn btn-small"
-                          onClick={() => openEditModal(selectedZone)}
-                        >
-                          <Edit2 size={14} />
-                          Edit
-                        </button>
-                        <button
-                          className="btn btn-small"
-                          onClick={() => openDeleteModal(selectedZone)}
-                        >
-                          <Trash2 className="icon" size={32} />
-                          Delete
-                        </button>
                       </div>
                     </div>
                   </InfoWindow>
@@ -732,435 +546,247 @@ const DangerZonesPage = () => {
               <Home size={20} />
             </button>
           </div>
-
-          {/* Recent Incidents */}
-          <div className="incidents-panel">
-            <div className="panel-header">
-              <h4>Recent Incidents ({incidents.length})</h4>
-              <button className="view-all-btn">
-                View All
-                <ChevronRight size={16} />
-              </button>
-            </div>
-            <div className="incidents-list">
-              {incidents.map((incident) => (
-                <div key={incident.id} className="incident-item">
-                  <div className="incident-icon">⚠️</div>
-                  <div className="incident-content">
-                    <h5>{incident.title}</h5>
-                    <div className="incident-meta">
-                      <span className="incident-type">{incident.type}</span>
-                      <span className="incident-time">{incident.time}</span>
-                    </div>
-                  </div>
-                  <button
-                    className="view-details-btn"
-                    onClick={() => {
-                      setSelectedIncidentDetails(incident);
-                      setShowIncidentDetails(true);
-                    }}
-                  >
-                    View Details
-                  </button>
-                </div>
-              ))}
-            </div>
-          </div>
         </div>
       </div>
 
-      {/* CREATE ZONE MODAL */}
-
-      {/* Incident Details Modal */}
-      <Modal
-        isOpen={showIncidentDetails}
-        onClose={() => setShowIncidentDetails(false)}
-        title="Incident Details"
-        size="large"
-      >
-        {selectedIncidentDetails && (
-          <div className="incident-details-modal">
-            <div className="incident-details-modal">
-              {/* Header with status */}
-              <div className="incident-header">
-                <h3>{selectedIncidentDetails.title}</h3>
-                <span
-                  className={`status-badge ${selectedIncidentDetails.status}`}
-                >
-                  {selectedIncidentDetails.status}
-                </span>
-              </div>
-
-              {/* Basic Info Grid */}
-              <div className="info-grid">
-                <div className="info-item">
-                  <span className="label">Type:</span>
-                  <span className="value">{selectedIncidentDetails.type}</span>
-                </div>
-                <div className="info-item">
-                  <span className="label">Reported By:</span>
-                  <span className="value">
-                    {selectedIncidentDetails.reportedBy}
-                  </span>
-                </div>
-                <div className="info-item">
-                  <span className="label">Time:</span>
-                  <span className="value">{selectedIncidentDetails.time}</span>
-                </div>
-                <div className="info-item">
-                  <span className="label">Reports:</span>
-                  <span className="value">
-                    {selectedIncidentDetails.reportCount} reports
-                  </span>
-                </div>
-                <div className="info-item">
-                  <span className="label">Severity:</span>
-                  <span className="value">
-                    {selectedIncidentDetails.severity}
-                  </span>
-                </div>
-                <div className="info-item">
-                  <span className="label">Zone:</span>
-                  <span className="value">{selectedIncidentDetails.zone}</span>
-                </div>
-              </div>
-
-              {/* Location */}
-              <div className="location-section">
-                <h4>📍 Location</h4>
-                <p>Lat: {selectedIncidentDetails.location.lat.toFixed(6)}</p>
-                <p>Lng: {selectedIncidentDetails.location.lng.toFixed(6)}</p>
-              </div>
-
-              {/* Description */}
-              <div className="description-section">
-                <h4>📝 Description</h4>
-                <p>{selectedIncidentDetails.description}</p>
-              </div>
-
-              {/* Actions Taken */}
-              <div className="actions-section">
-                <h4>🛡️ Actions Taken</h4>
-                <p>{selectedIncidentDetails.actionsTaken}</p>
-              </div>
-
-              {/* Proof Images */}
-              {selectedIncidentDetails.proofImages.length > 0 && (
-                <div className="images-section">
-                  <h4>
-                    🖼️ Proof Images (
-                    {selectedIncidentDetails.proofImages.length})
-                  </h4>
-                  <div className="image-grid">
-                    {selectedIncidentDetails.proofImages.map((img, index) => (
-                      <div key={index} className="image-preview">
-                        <img src={img} alt={`Proof ${index + 1}`} />
-                        <button className="view-full-btn">View Full</button>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
-        )}
-      </Modal>
+      {/* CREATE ZONE MODAL WITH FORMIK */}
       <Modal
         isOpen={showCreateModal}
         onClose={() => setShowCreateModal(false)}
         title="Create New Danger Zone"
         size="large"
       >
-        <div className="modal-form">
-          <div className="form-group">
-            <label>
-              <Type size={16} />
-              Zone Name *
-            </label>
-            <input
-              type="text"
-              value={newZone.name}
-              onChange={(e) => setNewZone({ ...newZone, name: e.target.value })}
-              placeholder="Enter zone name"
-            />
-          </div>
-
-          <div className="form-group">
-            <label>Severity Level *</label>
-            <div className="severity-options">
-              {["low", "medium", "high"].map((level) => (
-                <button
-                  key={level}
-                  type="button"
-                  className={`severity-option ${
-                    newZone.severity === level ? "selected" : ""
-                  }`}
-                  onClick={() => setNewZone({ ...newZone, severity: level })}
-                  style={{
-                    background:
-                      newZone.severity === level
-                        ? getSeverityColor(level)
-                        : getSeverityColor(level) + "20",
-                    color:
-                      newZone.severity === level
-                        ? "white"
-                        : getSeverityColor(level),
-                  }}
-                >
-                  {level === "high" ? (
-                    <AlertOctagon size={16} />
-                  ) : level === "medium" ? (
-                    <AlertTriangle size={16} />
-                  ) : (
-                    <AlertCircle size={16} />
-                  )}
-                  {level.charAt(0).toUpperCase() + level.slice(1)}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <div className="form-row">
-            <div className="form-group">
-              <label>
-                <Radio size={16} />
-                Radius (meters) *
-              </label>
-              <input
-                type="range"
-                min="50"
-                max="500"
-                value={newZone.radius}
-                onChange={(e) =>
-                  setNewZone({ ...newZone, radius: parseInt(e.target.value) })
-                }
-              />
-              <div className="range-value">{newZone.radius}m</div>
-            </div>
-            <div className="form-group">
-              <label>
-                <Flag size={16} />
-                Status *
-              </label>
-              <select
-                value={newZone.status}
-                onChange={(e) =>
-                  setNewZone({ ...newZone, status: e.target.value })
-                }
-              >
-                <option value="active">Active</option>
-                <option value="inactive">Inactive</option>
-                <option value="under_review">Under Review</option>
-              </select>
-            </div>
-          </div>
-
-          <div className="form-group">
-            <label>
-              <MapPin size={16} />
-              Location *
-            </label>
-            <div className="location-selector">
-              <div className="location-info">
-                <span>Lat: {newZone.location.lat.toFixed(6)}</span>
-                <span>Lng: {newZone.location.lng.toFixed(6)}</span>
+        <Formik
+          initialValues={{
+            name: "",
+            severity: "medium",
+            status: "active",
+            description: "",
+            radius: 100,
+            location: selectedLocation,
+          }}
+          validationSchema={ZoneValidationSchema}
+          onSubmit={handleCreateZoneSubmit}
+          enableReinitialize
+        >
+          {({ values, setFieldValue, isSubmitting, errors, touched }) => (
+            <Form className="modal-form">
+              {/* Zone Name */}
+              <div className="form-group">
+                <label>
+                  <Type size={16} />
+                  Zone Name *
+                </label>
+                <Field
+                  type="text"
+                  name="name"
+                  placeholder="Enter zone name"
+                  className={errors.name && touched.name ? 'error-field' : ''}
+                />
+                <ErrorMessage name="name" component="div" className="error-message" />
               </div>
-              <button
-                type="button"
-                className="btn btn-secondary"
-                onClick={() => setShowMapModal(true)}
-              >
-                <Map size={16} />
-                Select on Map
-              </button>
+
+              {/* Severity Level */}
+              <div className="form-group">
+                <label>Severity Level *</label>
+                <div className="severity-options" role="group">
+                  {["low", "medium", "high"].map((level) => (
+                    <button
+                      key={level}
+                      type="button"
+                      className={`severity-option ${values.severity === level ? "selected" : ""}`}
+                      onClick={() => setFieldValue("severity", level)}
+                      style={{
+                        background: values.severity === level
+                          ? getSeverityColor(level)
+                          : getSeverityColor(level) + "20",
+                        color: values.severity === level
+                          ? "white"
+                          : getSeverityColor(level),
+                      }}
+                    >
+                      {level === "high" ? (
+                        <AlertOctagon size={16} />
+                      ) : level === "medium" ? (
+                        <AlertTriangle size={16} />
+                      ) : (
+                        <AlertCircle size={16} />
+                      )}
+                      {level.charAt(0).toUpperCase() + level.slice(1)}
+                    </button>
+                  ))}
+                </div>
+                <ErrorMessage name="severity" component="div" className="error-message" />
+              </div>
+
+              {/* Status */}
+              <div className="form-row">
+                <div className="form-group">
+                  <label>
+                    <Flag size={16} />
+                    Status *
+                  </label>
+                  <Field as="select" name="status">
+                    <option value="active">Active</option>
+                    <option value="inactive">Inactive</option>
+                    <option value="under_review">Under Review</option>
+                  </Field>
+                  <ErrorMessage name="status" component="div" className="error-message" />
+                </div>
+              </div>
+
+              {/* Radius */}
+              <div className="form-group">
+                <label>
+                  <Radio size={16} />
+                  Radius (meters) *
+                </label>
+                <Field
+                  type="number"
+                  name="radius"
+                  min="10"
+                  max="1000"
+                  className={errors.radius && touched.radius ? 'error-field' : ''}
+                />
+                <ErrorMessage name="radius" component="div" className="error-message" />
+              </div>
+
+              {/* Location */}
+              <div className="form-group">
+                <label>
+                  <MapPin size={16} />
+                  Location *
+                </label>
+                <div className="location-selector">
+                  <div className="location-info">
+                    <span>Lat: {selectedLocation.lat.toFixed(6)}</span>
+                    <span>Lng: {selectedLocation.lng.toFixed(6)}</span>
+                  </div>
+                  <button
+                    type="button"
+                    className="btn btn-secondary"
+                    onClick={() => setShowMapModal(true)}
+                  >
+                    <Map size={16} />
+                    Select on Map
+                  </button>
+                </div>
+                <small className="hint">
+                  Click the button to select location on map
+                </small>
+                <ErrorMessage name="location" component="div" className="error-message" />
+              </div>
+
+              {/* Description */}
+              <div className="form-group">
+                <label>
+                  <FileText size={16} />
+                  Description *
+                </label>
+                <Field
+                  as="textarea"
+                  name="description"
+                  placeholder="Describe why this area is dangerous..."
+                  rows="4"
+                  className={errors.description && touched.description ? 'error-field' : ''}
+                />
+                <ErrorMessage name="description" component="div" className="error-message" />
+              </div>
+
+              <div className="modal-actions">
+                <button
+                  type="button"
+                  className="btn btn-secondary"
+                  onClick={() => setShowCreateModal(false)}
+                >
+                  <X size={16} />
+                  Cancel
+                </button>
+                <button 
+                  type="submit" 
+                  className="btn btn-primary"
+                  disabled={isSubmitting}
+                >
+                  <Check size={16} />
+                  {isSubmitting ? "Creating..." : "Create Zone"}
+                </button>
+              </div>
+            </Form>
+          )}
+        </Formik>
+      </Modal>
+
+      {/* MAP SELECTION MODAL */}
+      <Modal
+        isOpen={showMapModal}
+        onClose={() => setShowMapModal(false)}
+        title="Select Location on Map"
+        size="large"
+      >
+        <div className="map-selection-modal">
+          <div className="map-instructions">
+            <p>Click on the map to select a location for the danger zone.</p>
+            <div className="selected-coordinates">
+              <strong>Selected Location:</strong>
+              <span>Lat: {selectedLocation.lat.toFixed(6)}</span>
+              <span>Lng: {selectedLocation.lng.toFixed(6)}</span>
             </div>
-            <small className="hint">
-              Click the button to select location on map
-            </small>
           </div>
 
-          <div className="form-group">
-            <label>
-              <FileText size={16} />
-              Description *
-            </label>
-            <textarea
-              value={newZone.description}
-              onChange={(e) =>
-                setNewZone({ ...newZone, description: e.target.value })
-              }
-              placeholder="Describe why this area is dangerous..."
-              rows="4"
-            />
+          <div className="map-container-small">
+            {isLoaded ? (
+              <GoogleMap
+                mapContainerStyle={{ width: "100%", height: "400px" }}
+                center={selectedLocation}
+                zoom={17}
+                options={{
+                  streetViewControl: false,
+                  mapTypeControl: true,
+                  fullscreenControl: false,
+                }}
+                onClick={handleMapClick}
+              >
+                <Marker
+                  position={selectedLocation}
+                  icon={{
+                    path: window.google.maps.SymbolPath.CIRCLE,
+                    fillColor: "#FF3B30",
+                    fillOpacity: 1,
+                    strokeColor: "#FFFFFF",
+                    strokeWeight: 2,
+                    scale: 8,
+                  }}
+                />
+              </GoogleMap>
+            ) : (
+              <div className="map-loading">
+                <Loader2 className="loading-spinner" size={24} />
+                <p>Loading map...</p>
+              </div>
+            )}
           </div>
 
           <div className="modal-actions">
             <button
               className="btn btn-secondary"
-              onClick={() => setShowCreateModal(false)}
+              onClick={() => setShowMapModal(false)}
             >
               <X size={16} />
               Cancel
             </button>
-            <button className="btn btn-primary" onClick={handleCreateZone}>
+            <button
+              className="btn btn-primary"
+              onClick={() => {
+                // Formik initialValues uses selectedLocation and enableReinitialize is on,
+                // so just close the modal — Formik will pick up the updated selectedLocation.
+                setShowMapModal(false);
+              }}
+            >
               <Check size={16} />
-              Create Zone
+              Use This Location
             </button>
           </div>
         </div>
-      </Modal>
-
-      {/* EDIT ZONE MODAL */}
-      <Modal
-        isOpen={showEditModal}
-        onClose={() => {
-          setShowEditModal(false);
-          setEditZone(null);
-        }}
-        title="Edit Danger Zone"
-        size="large"
-      >
-        {editZone && (
-          <div className="modal-form">
-            <div className="form-group">
-              <label>
-                <Type size={16} />
-                Zone Name *
-              </label>
-              <input
-                type="text"
-                value={editZone.zoneName}
-                onChange={(e) =>
-                  setEditZone({ ...editZone, zoneName: e.target.value })
-                }
-                placeholder="Enter zone name"
-              />
-            </div>
-
-            <div className="form-group">
-              <label>Severity Level *</label>
-              <div className="severity-options">
-                {["low", "medium", "high"].map((level) => (
-                  <button
-                    key={level}
-                    type="button"
-                    className={`severity-option ${
-                      editZone.severity === level ? "selected" : ""
-                    }`}
-                    onClick={() =>
-                      setEditZone({ ...editZone, severity: level })
-                    }
-                    style={{
-                      background:
-                        editZone.severity === level
-                          ? getSeverityColor(level)
-                          : getSeverityColor(level) + "20",
-                      color:
-                        editZone.severity === level
-                          ? "white"
-                          : getSeverityColor(level),
-                    }}
-                  >
-                    {level === "high" ? (
-                      <AlertOctagon size={16} />
-                    ) : level === "medium" ? (
-                      <AlertTriangle size={16} />
-                    ) : (
-                      <AlertCircle size={16} />
-                    )}
-                    {level.charAt(0).toUpperCase() + level.slice(1)}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            <div className="form-row">
-              <div className="form-group">
-                <label>
-                  <Flag size={16} />
-                  Status *
-                </label>
-                <select
-                  value={editZone.status}
-                  onChange={(e) =>
-                    setEditZone({ ...editZone, status: e.target.value })
-                  }
-                >
-                  <option value="active">Active</option>
-                  <option value="inactive">Inactive</option>
-                  <option value="under_review">Under Review</option>
-                </select>
-              </div>
-            </div>
-
-            <div className="form-group">
-              <label>
-                <MapPin size={16} />
-                Location *
-              </label>
-              <div className="location-selector">
-                <div className="location-info">
-                  <span>Lat: {editZone?.location?.lat.toFixed(6)}</span>
-                  <span>Lng: {editZone?.location?.lng.toFixed(6)}</span>
-                </div>
-                <button
-                  type="button"
-                  className="btn btn-secondary"
-                  onClick={() => setShowMapModal(true)}
-                >
-                  <Map size={16} />
-                  Change Location
-                </button>
-              </div>
-              <small className="hint">
-                Click the button to change location on map
-              </small>
-            </div>
-
-            <div className="form-group">
-              <label>
-                <FileText size={16} />
-                Description *
-              </label>
-              <textarea
-                value={editZone.types.join("\n")}
-                onChange={(e) =>
-                  setEditZone({
-                    ...editZone,
-                    types: e.target.value.split("\n"),
-                  })
-                }
-                placeholder="Describe why this area is dangerous..."
-                rows="4"
-              />
-            </div>
-
-            <div className="modal-actions">
-              <button
-                className="btn btn-secondary"
-                onClick={() => {
-                  setShowEditModal(false);
-                  setEditZone(null);
-                }}
-              >
-                <X size={16} />
-                Cancel
-              </button>
-              <button
-                className="btn btn-primary"
-                onClick={handleEditZone}
-                disabled={
-                  /* !editZone.zoneName.trim() || */ !editZone.types.map(
-                    (type) => type.trim()
-                  ).length
-                }
-              >
-                <Check size={16} />
-                Save Changes
-              </button>
-            </div>
-          </div>
-        )}
       </Modal>
 
       {/* DELETE ZONE CONFIRMATION MODAL */}
@@ -1199,149 +825,15 @@ const DangerZonesPage = () => {
                 Cancel
               </button>
               <button className="btn btn-danger" onClick={handleDeleteZone}>
-                <Trash2 className="icon" size={32} />
+                <Trash2 size={16} />
                 Delete Zone
               </button>
             </div>
           </div>
         )}
       </Modal>
-
-      {/* DELETE INCIDENT CONFIRMATION MODAL */}
-      <Modal
-        isOpen={showIncidentDeleteModal}
-        onClose={() => {
-          setShowIncidentDeleteModal(false);
-          setIncidentToDelete(null);
-        }}
-        title="Confirm Delete"
-        size="small"
-      >
-        {incidentToDelete && (
-          <div className="delete-confirmation">
-            <div className="warning-icon">
-              <AlertTriangle size={48} />
-            </div>
-            <h4>Delete Incident Report</h4>
-            <p>
-              Are you sure you want to delete{" "}
-              <strong>{incidentToDelete.title}</strong>?
-            </p>
-            <p className="warning-text">This action cannot be undone.</p>
-            <div className="modal-actions">
-              <button
-                className="btn btn-secondary"
-                onClick={() => {
-                  setShowIncidentDeleteModal(false);
-                  setIncidentToDelete(null);
-                }}
-              >
-                <X size={16} />
-                Cancel
-              </button>
-              <button className="btn btn-danger" onClick={handleDeleteIncident}>
-                <Trash2 size={16} />
-                Delete Incident
-              </button>
-            </div>
-          </div>
-        )}
-      </Modal>
-
-      {/* MAP SELECTION MODAL */}
-      <Modal
-        isOpen={showMapModal}
-        onClose={() => setShowMapModal(false)}
-        title="Select Location on Map"
-        size="large"
-      >
-        <div className="map-selection-modal">
-          <div className="map-instructions">
-            <p>
-              Click on the map to select a location. The selected coordinates
-              will be used for the danger zone.
-            </p>
-            <div className="selected-coordinates">
-              <strong>Selected Location:</strong>
-              <span>
-                Lat:{" "}
-                {(showCreateModal
-                  ? newZone.location.lat
-                  : editZone?.location.lat || 0
-                ).toFixed(6)}
-              </span>
-              <span>
-                Lng:{" "}
-                {(showCreateModal
-                  ? newZone.location.lng
-                  : editZone?.location.lng || 0
-                ).toFixed(6)}
-              </span>
-            </div>
-          </div>
-
-          <div className="map-container-small">
-            {isLoaded ? (
-              <GoogleMap
-                mapContainerStyle={{ width: "100%", height: "400px" }}
-                center={
-                  showCreateModal
-                    ? newZone.location
-                    : editZone?.location || mapCenter
-                }
-                zoom={17}
-                options={{
-                  streetViewControl: false,
-                  mapTypeControl: true,
-                  fullscreenControl: false,
-                }}
-                onClick={handleMapClick}
-              >
-                {/* Marker for selected location */}
-                <Marker
-                  position={
-                    showCreateModal
-                      ? newZone.location
-                      : editZone?.location || mapCenter
-                  }
-                  icon={{
-                    path: window.google.maps.SymbolPath.CIRCLE,
-                    fillColor: "#FF3B30",
-                    fillOpacity: 1,
-                    strokeColor: "#FFFFFF",
-                    strokeWeight: 2,
-                    scale: 8,
-                  }}
-                />
-              </GoogleMap>
-            ) : (
-              <div className="map-loading">
-                <Loader2 className="loading-spinner" size={24} />
-                <p>Loading map...</p>
-              </div>
-            )}
-          </div>
-
-          <div className="modal-actions">
-            <button
-              className="btn btn-secondary"
-              onClick={() => setShowMapModal(false)}
-            >
-              <X size={16} />
-              Cancel
-            </button>
-            <button
-              className="btn btn-primary"
-              onClick={() => setShowMapModal(false)}
-            >
-              <Check size={16} />
-              Use This Location
-            </button>
-          </div>
-        </div>
-      </Modal>
     </div>
   );
 };
 
-export default DangerZonesPage;
+export default DangerZonePage;
