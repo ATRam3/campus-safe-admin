@@ -86,23 +86,7 @@ const DangerZonePage = () => {
     fetchZones();
   }, []);
 
-  // Fetch incidents on mount
-  useEffect(() => {
-    const fetchIncidents = async () => {
-      try {
-        const response = await api.get("/report");
-        // Ensure we always set an array
-        const data = response?.data?.data;
-        setIncidents(Array.isArray(data) ? data : []);
-      } catch (error) {
-        console.error("Error fetching incidents:", error);
-      }
-    };
-    
-    fetchIncidents();
-  }, []);
 
-  // Optional: fetch card config from backend so icons/labels can be edited in DB
   useEffect(() => {
     const fetchCardConfig = async () => {
       try {
@@ -392,7 +376,7 @@ const DangerZonePage = () => {
                   </div>
                   <div className="zone-content">
                     <div className="zone-header">
-                      <h5 style={{ color: "black" }}>{zone.name}</h5>
+                      <h5 style={{ color: "black" }}>{zone.zoneName}</h5>
                       <span className="zone-status">{zone.status}</span>
                     </div>
                     <p className="zone-description">{zone.description}</p>

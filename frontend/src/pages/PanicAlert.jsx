@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   GoogleMap,
   Marker,
@@ -58,6 +58,20 @@ const PanicAlertsPage = () => {
   const [selectedAlert, setSelectedAlert] = useState(initialAlerts[0]);
   const [mapCenter] = useState({ lat: 8.8913, lng: 38.8089 });
   const [mapZoom] = useState(16);
+
+  //get All panic alerts
+  useEffect(() => {
+       const fetchAlerts = async () => {
+        const response = await fetch('/api/panic-alerts');
+        const data = await response.json();
+        setAlerts(data);
+        
+         // Here you would typically make an API call to fetch real panic alerts
+         // For this example, we're using the initialAlerts defined above
+         setAlerts(initialAlerts);
+       };
+       fetchAlerts();
+     }, []);
 
   // Handle alert click
   const handleAlertClick = (alert) => {

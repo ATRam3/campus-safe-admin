@@ -362,6 +362,11 @@
   transition: all 0.2s ease;
 }
 
+.action-btn svg {
+  width: 16px;
+  height: 16px;
+}
+
 .action-btn:hover {
   background: #4299e1;
   color: white;
