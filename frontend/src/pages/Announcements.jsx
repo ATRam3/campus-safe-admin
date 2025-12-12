@@ -1,100 +1,58 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import api from "../services/api";
 import "../css/Announcements.css";
 
 const Announcements = () => {
-  // Sample announcements data
-  const initialAnnouncements = [
-    {
-      id: 1,
-      title: "Campus Safety Guidelines Update",
-      content:
-        "All students must attend the mandatory safety workshop next Friday. The workshop will cover emergency procedures, campus safety zones, and how to use the panic alert system.",
-      audience: "all_students",
-      status: "sent",
-      date: "2024-01-22",
-      time: "10:30 AM",
-      sender: "Security Office",
-      sentCount: 2450,
-      openedCount: 1987,
-      attachments: ["safety_guidelines.pdf"],
-    },
-    {
-      id: 2,
-      title: "Emergency Drill Scheduled",
-      content:
-        "There will be a campus-wide emergency drill this Wednesday at 2 PM. Please follow all instructions from security personnel. This drill will test our new evacuation procedures.",
-      audience: "all_users",
-      status: "scheduled",
-      date: "2024-01-25",
-      time: "2:00 PM",
-      sender: "Safety Committee",
-      sentCount: 3200,
-      openedCount: 0,
-      attachments: ["drill_procedures.pdf", "evacuation_map.png"],
-    },
-    {
-      id: 3,
-      title: "New Safety Features in Mobile App",
-      content:
-        "We've added new safety features to the campus safety app: 1) Live location sharing during emergencies 2) Quick access to security contacts 3) Campus safety zone alerts. Please update your app to version 3.2.",
-      audience: "mobile_users",
-      status: "sent",
-      date: "2024-01-20",
-      time: "3:15 PM",
-      sender: "IT Department",
-      sentCount: 1800,
-      openedCount: 1520,
-      attachments: ["app_update_guide.pdf"],
-    },
-    {
-      id: 4,
-      title: "Weather Alert: Heavy Rain Warning",
-      content:
-        "Heavy rainfall expected tomorrow. Please avoid low-lying areas on campus and report any flooding immediately. Campus transport will operate on a modified schedule.",
-      audience: "all_users",
-      status: "sent",
-      date: "2024-01-19",
-      time: "4:45 PM",
-      sender: "Weather Alert System",
-      sentCount: 3100,
-      openedCount: 2850,
-      attachments: [],
-    },
-    {
-      id: 5,
-      title: "Self-Defense Workshop Registration Open",
-      content:
-        "Free self-defense workshops are now open for registration. Learn essential safety skills from certified instructors. Limited spots available. Register through the campus portal.",
-      audience: "students",
-      status: "draft",
-      date: "2024-01-18",
-      time: "11:20 AM",
-      sender: "Student Affairs",
-      sentCount: 0,
-      openedCount: 0,
-      attachments: ["workshop_schedule.pdf", "registration_form.docx"],
-    },
-  ];
-
   // State management
-  const [announcements, setAnnouncements] = useState(initialAnnouncements);
+  const [announcements, setAnnouncements] = useState([]);
   const [filterStatus, setFilterStatus] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedAnnouncement, setSelectedAnnouncement] = useState(
-    initialAnnouncements[0]
-  );
+  const [selectedAnnouncement, setSelectedAnnouncement] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [formErrors, setFormErrors] = useState({});
 
-  // Form state
+  // Form state - Simplified
   const [showNewAnnouncement, setShowNewAnnouncement] = useState(false);
   const [newAnnouncement, setNewAnnouncement] = useState({
     title: "",
     content: "",
-    audience: "all_users",
-    scheduleDate: "",
-    scheduleTime: "",
-    immediateSend: true,
-    attachments: [],
+    type: "",
   });
+
+  // Delete confirmation modal
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [announcementToDelete, setAnnouncementToDelete] = useState(null);
+
+  // Error state
+  const [error, setError] = useState(null);
+  const [successMessage, setSuccessMessage] = useState(null);
+
+  // Fetch announcements on component mount
+  useEffect(() => {
+    fetchAnnouncements();
+  }, []);
+
+  const fetchAnnouncements = async () => {
+    setLoading(true);
+    try {
+      const response = await api.get("/notification/announcements");
+      console.log("Fetched announcements:", response.data);
+
+      // Handle different response structures
+      const announcementsData = response.data.data || response.data || [];
+      setAnnouncements(announcementsData);
+
+      // Set first announcement as selected if available
+      if (announcementsData.length > 0 && !selectedAnnouncement) {
+        setSelectedAnnouncement(announcementsData[0]);
+      }
+    } catch (error) {
+      console.error("Error fetching announcements:", error);
+      showError("Failed to load announcements. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   // Filter announcements
   const filteredAnnouncements = announcements.filter((announcement) => {
@@ -107,175 +65,252 @@ const Announcements = () => {
     return matchesStatus && matchesSearch;
   });
 
-  // Get audience label
-  const getAudienceLabel = (audience) => {
-    const labels = {
-      all_users: "All Users",
-      all_students: "All Students",
-      mobile_users: "Mobile App Users",
-      students: "Students Only",
-      staff: "Staff Only",
-      faculty: "Faculty Only",
-    };
-    return labels[audience] || audience;
-  };
-
   // Get status badge color
-  const getStatusColor = (status) => {
+  const getStatusInfo = (status) => {
     switch (status) {
       case "sent":
-        return "#34C759";
-      case "scheduled":
-        return "#FF9500";
+        return { color: "#34C759", text: "Sent", badge: "📤" };
       case "draft":
-        return "#8E8E93";
+        return { color: "#8E8E93", text: "Draft", badge: "📝" };
       default:
-        return "#8E8E93";
+        return { color: "#8E8E93", text: "Unknown", badge: "📄" };
     }
+  };
+
+  // Show error message
+  const showError = (message) => {
+    setError(message);
+    setTimeout(() => setError(null), 5000);
+  };
+
+  // Show success message
+  const showSuccess = (message) => {
+    setSuccessMessage(message);
+    setTimeout(() => setSuccessMessage(null), 5000);
+  };
+
+  // Validate form
+  const validateForm = () => {
+    const errors = {};
+
+    if (!newAnnouncement.title.trim()) {
+      errors.title = "Title is required";
+    }
+
+    if (!newAnnouncement.content.trim()) {
+      errors.content = "Content is required";
+    }
+
+    return errors;
   };
 
   // Handle sending new announcement
-  const handleSendAnnouncement = () => {
-    if (!newAnnouncement.title.trim() || !newAnnouncement.content.trim()) {
-      alert("Please fill in all required fields");
+  const handleSendAnnouncement = async () => {
+    // Clear previous errors
+    setFormErrors({});
+
+    // Validate form
+    const errors = validateForm();
+    if (Object.keys(errors).length > 0) {
+      setFormErrors(errors);
+      showError("Please fix the form errors");
       return;
     }
 
-    const newId = Math.max(...announcements.map((a) => a.id)) + 1;
-    const now = new Date();
-
-    const newAnnouncementObj = {
-      id: newId,
-      title: newAnnouncement.title,
-      content: newAnnouncement.content,
-      audience: newAnnouncement.audience,
-      status: newAnnouncement.immediateSend ? "sent" : "scheduled",
-      date: now.toISOString().split("T")[0],
-      time: now.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
-      sender: "Security Admin",
-      sentCount: 0,
-      openedCount: 0,
-      attachments: newAnnouncement.attachments,
+    // Build payload - Always sent to all users
+    const payload = {
+      title: newAnnouncement.title.trim(),
+      content: newAnnouncement.content.trim(),
+      targetAudience: "all", // Fixed to all users
+      type: newAnnouncement.type,
+      status: "sent", // Always send immediately
     };
 
-    // If scheduled, update date and time
-    if (!newAnnouncement.immediateSend && newAnnouncement.scheduleDate) {
-      newAnnouncementObj.date = newAnnouncement.scheduleDate;
-      newAnnouncementObj.time = newAnnouncement.scheduleTime || "9:00 AM";
+    console.log("Sending payload:", payload);
+
+    try {
+      setLoading(true);
+      const response = await api.post("/notification/alerts", payload);
+      console.log("Response:", response.data);
+
+      // Handle different response structures
+      const newAnnouncementData = response.data.data || response.data;
+
+      if (!newAnnouncementData || !newAnnouncementData._id) {
+        throw new Error("Invalid response from server");
+      }
+
+      // Add to beginning of announcements array (most recent first)
+      setAnnouncements((prev) => [newAnnouncementData, ...prev]);
+      setSelectedAnnouncement(newAnnouncementData);
+
+      // Reset form and close modal
+      resetForm();
+      showSuccess("✅ Announcement sent successfully to all users!");
+    } catch (err) {
+      console.error("Error sending announcement:", err);
+      const errorMessage =
+        err.response?.data?.message ||
+        err.response?.data?.error ||
+        err.message ||
+        "Failed to send announcement. Please try again.";
+      showError(`❌ ${errorMessage}`);
+    } finally {
+      setLoading(false);
     }
-
-    setAnnouncements([newAnnouncementObj, ...announcements]);
-    setSelectedAnnouncement(newAnnouncementObj);
-    setNewAnnouncement({
-      title: "",
-      content: "",
-      audience: "all_users",
-      scheduleDate: "",
-      scheduleTime: "",
-      immediateSend: true,
-      attachments: [],
-    });
-    setShowNewAnnouncement(false);
   };
 
-  // Handle file attachment
-  const handleFileUpload = (e) => {
-    const files = Array.from(e.target.files);
-    const fileNames = files.map((file) => file.name);
-    setNewAnnouncement({
-      ...newAnnouncement,
-      attachments: [...newAnnouncement.attachments, ...fileNames],
-    });
+  // Open delete confirmation modal
+  const openDeleteModal = (announcement) => {
+    setAnnouncementToDelete(announcement);
+    setShowDeleteModal(true);
   };
 
-  // Remove attachment
-  const removeAttachment = (index) => {
-    const newAttachments = [...newAnnouncement.attachments];
-    newAttachments.splice(index, 1);
-    setNewAnnouncement({
-      ...newAnnouncement,
-      attachments: newAttachments,
-    });
+  // Handle delete announcement
+  const handleDeleteAnnouncement = async () => {
+    if (!announcementToDelete) return;
+
+    try {
+      setLoading(true);
+      await api.delete(
+        `/notification/announcements/${announcementToDelete._id}`
+      );
+
+      // Remove from state
+      const updatedAnnouncements = announcements.filter(
+        (a) => a._id !== announcementToDelete._id
+      );
+      setAnnouncements(updatedAnnouncements);
+
+      // Clear selection if deleted announcement was selected
+      if (
+        selectedAnnouncement &&
+        selectedAnnouncement._id === announcementToDelete._id
+      ) {
+        setSelectedAnnouncement(updatedAnnouncements[0] || null);
+      }
+
+      showSuccess("✅ Announcement deleted successfully!");
+    } catch (err) {
+      console.error("Error deleting announcement:", err);
+      showError("❌ Failed to delete announcement. Please try again.");
+    } finally {
+      setLoading(false);
+      setShowDeleteModal(false);
+      setAnnouncementToDelete(null);
+    }
   };
 
   // Format date for display
   const formatDate = (dateString) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString("en-US", {
-      month: "short",
-      day: "numeric",
-      year: "numeric",
-    });
+    if (!dateString) return "Just now";
+    try {
+      const date = new Date(dateString);
+      if (isNaN(date.getTime())) return "Recently";
+
+      const now = new Date();
+      const diffMs = now - date;
+      const diffMins = Math.floor(diffMs / 60000);
+      const diffHours = Math.floor(diffMs / 3600000);
+
+      if (diffMins < 1) return "Just now";
+      if (diffMins < 60) return `${diffMins} min ago`;
+      if (diffHours < 24) return `${diffHours} hours ago`;
+
+      return date.toLocaleDateString("en-US", {
+        month: "short",
+        day: "numeric",
+        year: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+      });
+    } catch (err) {
+      return "Recently";
+    }
   };
 
-  // Get open rate
-  const getOpenRate = (announcement) => {
-    if (announcement.sentCount === 0) return 0;
-    return Math.round(
-      (announcement.openedCount / announcement.sentCount) * 100
-    );
+  // Reset form
+  const resetForm = () => {
+    setNewAnnouncement({
+      title: "",
+      content: "",
+      type: "announcement",
+    });
+    setFormErrors({});
+    setShowNewAnnouncement(false);
   };
+
+  // Calculate stats
+  const sentCount = announcements.filter((a) => a.status === "sent").length;
 
   return (
     <div className="announcements-page">
       {/* Page Header */}
       <div className="page-header">
         <div className="header-left">
-          <h1>📢 Announcements & Notifications</h1>
-          <p>
-            Send safety alerts, educational content, and important updates to
-            campus users
-          </p>
+          <h1>📢 Announcements & Alerts</h1>
+          <p>Send important updates to all campus users</p>
         </div>
         <div className="header-actions">
           <button
             className="btn btn-primary"
             onClick={() => setShowNewAnnouncement(true)}
+            disabled={loading}
           >
-            ✉️ Create New Announcement
+            + Create New
           </button>
         </div>
       </div>
 
-      {/* Stats Cards */}
+      {/* Success Message */}
+      {successMessage && (
+        <div className="alert alert-success">
+          <span className="alert-icon">✅</span>
+          <span>{successMessage}</span>
+          <button
+            className="alert-close"
+            onClick={() => setSuccessMessage(null)}
+          >
+            ×
+          </button>
+        </div>
+      )}
+
+      {/* Error Message */}
+      {error && (
+        <div className="alert alert-error">
+          <span className="alert-icon">⚠️</span>
+          <span>{error}</span>
+          <button className="alert-close" onClick={() => setError(null)}>
+            ×
+          </button>
+        </div>
+      )}
+
+      {/* Stats Cards - Simple */}
       <div className="stats-section">
         <div className="stats-card">
           <div
             className="stat-icon"
-            style={{ background: "#007AFF20", color: "#007AFF" }}
+            style={{ background: "#34C75920", color: "#34C759" }}
           >
             📤
           </div>
           <div className="stat-info">
-            <h3>{announcements.filter((a) => a.status === "sent").length}</h3>
+            <h3>{sentCount}</h3>
             <p>Sent Announcements</p>
           </div>
         </div>
         <div className="stats-card">
           <div
             className="stat-icon"
-            style={{ background: "#FF950020", color: "#FF9500" }}
+            style={{ background: "#007AFF20", color: "#007AFF" }}
           >
-            ⏰
+            👥
           </div>
           <div className="stat-info">
-            <h3>
-              {announcements.filter((a) => a.status === "scheduled").length}
-            </h3>
-            <p>Scheduled</p>
-          </div>
-        </div>
-
-        <div className="stats-card">
-          <div
-            className="stat-icon"
-            style={{ background: "#FF3B3020", color: "#FF3B30" }}
-          >
-            📝
-          </div>
-          <div className="stat-info">
-            <h3>{announcements.filter((a) => a.status === "draft").length}</h3>
-            <p>Drafts</p>
+            <h3>All Users</h3>
+            <p>Default Audience</p>
           </div>
         </div>
       </div>
@@ -290,10 +325,10 @@ const Announcements = () => {
               <div className="search-box">
                 <input
                   type="text"
-                  name=""
                   placeholder="Search announcements..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
+                  disabled={loading}
                 />
                 <span className="search-icon">🔍</span>
               </div>
@@ -301,54 +336,72 @@ const Announcements = () => {
                 className="filter-select"
                 value={filterStatus}
                 onChange={(e) => setFilterStatus(e.target.value)}
+                disabled={loading}
               >
-                <option value="all">All Status</option>
+                <option value="all">All</option>
                 <option value="sent">Sent</option>
-                <option value="scheduled">Scheduled</option>
-                <option value="draft">Draft</option>
               </select>
             </div>
           </div>
 
           <div className="announcements-list">
-            {filteredAnnouncements.map((announcement) => (
-              <div
-                key={announcement.id}
-                className={`announcement-item ${
-                  selectedAnnouncement?.id === announcement.id ? "selected" : ""
-                }`}
-                onClick={() => setSelectedAnnouncement(announcement)}
-              >
-                <div className="announcement-header">
-                  <h4>{announcement.title}</h4>
-                  <span
-                    className="status-badge"
-                    style={{
-                      background: getStatusColor(announcement.status) + "20",
-                      color: getStatusColor(announcement.status),
-                    }}
-                  >
-                    {announcement.status}
-                  </span>
-                </div>
-                <p className="announcement-preview">
-                  {announcement.content.substring(0, 100)}...
-                </p>
-                <div className="announcement-footer">
-                  <span className="audience-badge">
-                    👥 {getAudienceLabel(announcement.audience)}
-                  </span>
-                  <span className="date-info">
-                    📅 {formatDate(announcement.date)} at {announcement.time}
-                  </span>
-                </div>
-                {announcement.attachments.length > 0 && (
-                  <div className="attachments-preview">
-                    📎 {announcement.attachments.length} attachment(s)
-                  </div>
-                )}
+            {loading && !announcements.length ? (
+              <div className="loading-state">
+                <div className="loading-spinner"></div>
+                <p>Loading announcements...</p>
               </div>
-            ))}
+            ) : filteredAnnouncements.length === 0 ? (
+              <div className="empty-list">
+                <p>No announcements found.</p>
+              </div>
+            ) : (
+              filteredAnnouncements.map((announcement) => {
+                const statusInfo = getStatusInfo(announcement.status);
+                return (
+                  <div
+                    key={announcement._id}
+                    className={`announcement-item ${
+                      selectedAnnouncement?._id === announcement._id
+                        ? "selected"
+                        : ""
+                    }`}
+                    onClick={() => setSelectedAnnouncement(announcement)}
+                  >
+                    <div className="announcement-header">
+                      <h4>{announcement.title}</h4>
+                      <div className="announcement-type">
+                        <span className={`type-badge ${announcement.type}`}>
+                          {announcement.type === "alert"
+                            ? "⚠️ Alert"
+                            : "📢 Announcement"}
+                        </span>
+                        <span
+                          className="status-badge"
+                          style={{
+                            background: statusInfo.color + "20",
+                            color: statusInfo.color,
+                          }}
+                        >
+                          {statusInfo.text}
+                        </span>
+                      </div>
+                    </div>
+                    <p className="announcement-preview">
+                      {announcement.content.substring(0, 80)}
+                      {announcement.content.length > 80 ? "..." : ""}
+                    </p>
+                    <div className="announcement-footer">
+                      <span className="audience-badge">👥 All Users</span>
+                      <span className="date-info">
+                        {formatDate(
+                          announcement.createdAt || announcement.time
+                        )}
+                      </span>
+                    </div>
+                  </div>
+                );
+              })
+            )}
           </div>
         </div>
 
@@ -360,12 +413,18 @@ const Announcements = () => {
                 <div className="title-section">
                   <h2>{selectedAnnouncement.title}</h2>
                   <div className="meta-info">
-                    <span className="sender-info">
-                      From: {selectedAnnouncement.sender}
+                    <span
+                      className={`type-badge large ${selectedAnnouncement.type}`}
+                    >
+                      {selectedAnnouncement.type === "alert"
+                        ? "⚠️ Alert"
+                        : "📢 Announcement"}
                     </span>
                     <span className="date-info">
-                      {formatDate(selectedAnnouncement.date)} at{" "}
-                      {selectedAnnouncement.time}
+                      {formatDate(
+                        selectedAnnouncement.createdAt ||
+                          selectedAnnouncement.time
+                      )}
                     </span>
                   </div>
                 </div>
@@ -374,26 +433,17 @@ const Announcements = () => {
                     <div
                       className="status-dot"
                       style={{
-                        background: getStatusColor(selectedAnnouncement.status),
+                        background: getStatusInfo(selectedAnnouncement.status)
+                          .color,
                       }}
                     ></div>
                     <span className="status-text">
-                      {selectedAnnouncement.status.toUpperCase()}
+                      {getStatusInfo(
+                        selectedAnnouncement.status
+                      ).text.toUpperCase()}
                     </span>
                   </div>
-                  <div className="audience-display">
-                    👥 Sent to:{" "}
-                    {getAudienceLabel(selectedAnnouncement.audience)}
-                  </div>
-                </div>
-              </div>
-
-              <div className="performance-stats">
-                <div className="stat-box">
-                  <div className="stat-label">Sent To</div>
-                  <div className="stat-value">
-                    {selectedAnnouncement.sentCount.toLocaleString()}
-                  </div>
+                  <div className="audience-display">👥 Sent to: All Users</div>
                 </div>
               </div>
 
@@ -403,270 +453,232 @@ const Announcements = () => {
                   {selectedAnnouncement.content
                     .split("\n")
                     .map((paragraph, index) => (
-                      <p key={index}>{paragraph}</p>
+                      <p key={index}>{paragraph || <br />}</p>
                     ))}
                 </div>
               </div>
 
-              {selectedAnnouncement.attachments.length > 0 && (
-                <div className="attachments-section">
-                  <h3>
-                    📎 Attachments ({selectedAnnouncement.attachments.length})
-                  </h3>
-                  <div className="attachments-list">
-                    {selectedAnnouncement.attachments.map((file, index) => (
-                      <div key={index} className="attachment-item">
-                        <div className="file-icon">
-                          {file.endsWith(".pdf")
-                            ? "📄"
-                            : file.endsWith(".docx")
-                            ? "📝"
-                            : file.endsWith(".png") || file.endsWith(".jpg")
-                            ? "🖼️"
-                            : "📎"}
-                        </div>
-                        <span className="file-name">{file}</span>
-                        <button className="download-btn">⬇️</button>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
               <div className="action-buttons">
-                {selectedAnnouncement.status === "draft" && (
-                  <>
-                    <button className="btn btn-secondary">✏️ Edit Draft</button>
-                    <button className="btn btn-primary">📤 Send Now</button>
-                  </>
-                )}
-                {selectedAnnouncement.status === "scheduled" && (
-                  <>
-                    <button className="btn btn-secondary">⏰ Reschedule</button>
-                    <button className="btn btn-primary">📤 Send Now</button>
-                  </>
-                )}
-                {selectedAnnouncement.status === "sent" && (
-                  <button className="btn btn-secondary">
-                    📊 View Analytics
-                  </button>
-                )}
-                <button className="btn btn-outline">🗑️ Delete</button>
+                <button
+                  className="btn btn-outline delete-btn"
+                  onClick={() => openDeleteModal(selectedAnnouncement)}
+                  disabled={loading}
+                >
+                  🗑️ Delete
+                </button>
               </div>
             </div>
           ) : (
             <div className="empty-state">
               <div className="empty-icon">📢</div>
               <h3>No Announcement Selected</h3>
-              <p>
-                Select an announcement from the list to view details, or create
-                a new one.
-              </p>
+              <p>Select an announcement from the list to view details.</p>
             </div>
           )}
         </div>
       </div>
 
-      {/* New Announcement Modal */}
+      {/* Create New Announcement Modal */}
       {showNewAnnouncement && (
-        <div
-          className="modal-overlay"
-          onClick={() => setShowNewAnnouncement(false)}
-        >
-          <div
-            className="modal-container large"
-            onClick={(e) => e.stopPropagation()}
-          >
+        <div className="modal-overlay" onClick={resetForm}>
+          <div className="modal-container" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
               <h3>Create New Announcement</h3>
-              <button
-                className="modal-close"
-                onClick={() => setShowNewAnnouncement(false)}
-              >
+              <button className="modal-close" onClick={resetForm}>
                 ×
               </button>
             </div>
             <div className="modal-content">
               <div className="announcement-form">
+                {/* Type Selection */}
                 <div className="form-group">
-                  <label>Announcement Title *</label>
+                  <label>Type *</label>
+                  <div className="type-selection">
+                    <label
+                      className={`type-option ${
+                        newAnnouncement.type === "announcement" ? "active" : ""
+                      }`}
+                    >
+                      <input
+                        type="radio"
+                        name="type"
+                        value="announcement"
+                        checked={newAnnouncement.type === "announcement"}
+                        onChange={(e) =>
+                          setNewAnnouncement({
+                            ...newAnnouncement,
+                            type: e.target.value,
+                          })
+                        }
+                      />
+                      <div className="option-content">
+                        <span className="option-icon">📢</span>
+                        <span className="option-text">Announcement</span>
+                      </div>
+                    </label>
+                    <label
+                      className={`type-option ${
+                        newAnnouncement.type === "alert" ? "active" : ""
+                      }`}
+                    >
+                      <input
+                        type="radio"
+                        name="type"
+                        value="alert"
+                        checked={newAnnouncement.type === "alert"}
+                        onChange={(e) =>
+                          setNewAnnouncement({
+                            ...newAnnouncement,
+                            type: e.target.value,
+                          })
+                        }
+                      />
+                      <div className="option-content">
+                        <span className="option-icon">⚠️</span>
+                        <span className="option-text">Alert</span>
+                      </div>
+                    </label>
+                  </div>
+                </div>
+
+                {/* Title Field */}
+                <div className="form-group">
+                  <label>
+                    Title *
+                    {formErrors.title && (
+                      <span className="error-text"> - {formErrors.title}</span>
+                    )}
+                  </label>
                   <input
                     type="text"
-                    placeholder="e.g., Safety Alert: Weather Warning"
+                    placeholder={`Enter ${newAnnouncement.type} title`}
                     value={newAnnouncement.title}
-                    onChange={(e) =>
+                    onChange={(e) => {
                       setNewAnnouncement({
                         ...newAnnouncement,
                         title: e.target.value,
-                      })
-                    }
+                      });
+                      if (formErrors.title) {
+                        setFormErrors((prev) => ({
+                          ...prev,
+                          title: undefined,
+                        }));
+                      }
+                    }}
+                    className={formErrors.title ? "error" : ""}
+                    disabled={loading}
                   />
                 </div>
 
-                <div className="form-row">
-                  <div className="form-group">
-                    <label>Audience *</label>
-                    <select
-                      value={newAnnouncement.audience}
-                      onChange={(e) =>
-                        setNewAnnouncement({
-                          ...newAnnouncement,
-                          audience: e.target.value,
-                        })
-                      }
-                    >
-                      <option value="all_users">All Campus Users</option>
-                      <option value="all_students">All Students</option>
-                      <option value="students">Students Only</option>
-                      <option value="staff">Staff Only</option>
-                      <option value="faculty">Faculty Only</option>
-                      <option value="mobile_users">Mobile App Users</option>
-                    </select>
-                  </div>
-
-                  <div className="form-group">
-                    <label>Sending Option</label>
-                    <div className="radio-group">
-                      <label className="radio-option">
-                        <input
-                          type="radio"
-                          checked={newAnnouncement.immediateSend}
-                          onChange={() =>
-                            setNewAnnouncement({
-                              ...newAnnouncement,
-                              immediateSend: true,
-                            })
-                          }
-                        />
-                        <span>Send Immediately</span>
-                      </label>
-                      <label className="radio-option">
-                        <input
-                          type="radio"
-                          checked={!newAnnouncement.immediateSend}
-                          onChange={() =>
-                            setNewAnnouncement({
-                              ...newAnnouncement,
-                              immediateSend: false,
-                            })
-                          }
-                        />
-                        <span>Schedule for Later</span>
-                      </label>
-                    </div>
-                  </div>
-                </div>
-
-                {!newAnnouncement.immediateSend && (
-                  <div className="form-row">
-                    <div className="form-group">
-                      <label>Schedule Date *</label>
-                      <input
-                        type="date"
-                        value={newAnnouncement.scheduleDate}
-                        onChange={(e) =>
-                          setNewAnnouncement({
-                            ...newAnnouncement,
-                            scheduleDate: e.target.value,
-                          })
-                        }
-                        min={new Date().toISOString().split("T")[0]}
-                      />
-                    </div>
-                    <div className="form-group">
-                      <label>Schedule Time *</label>
-                      <input
-                        type="time"
-                        value={newAnnouncement.scheduleTime}
-                        onChange={(e) =>
-                          setNewAnnouncement({
-                            ...newAnnouncement,
-                            scheduleTime: e.target.value,
-                          })
-                        }
-                      />
-                    </div>
-                  </div>
-                )}
-
+                {/* Content Field */}
                 <div className="form-group">
-                  <label>Message Content *</label>
+                  <label>
+                    Message *
+                    {formErrors.content && (
+                      <span className="error-text">
+                        {" "}
+                        - {formErrors.content}
+                      </span>
+                    )}
+                  </label>
                   <textarea
                     value={newAnnouncement.content}
-                    onChange={(e) =>
+                    onChange={(e) => {
                       setNewAnnouncement({
                         ...newAnnouncement,
                         content: e.target.value,
-                      })
-                    }
-                    placeholder="Write your announcement message here. You can include safety instructions, educational content, or important updates..."
-                    rows="8"
+                      });
+                      if (formErrors.content) {
+                        setFormErrors((prev) => ({
+                          ...prev,
+                          content: undefined,
+                        }));
+                      }
+                    }}
+                    placeholder={`Write your ${newAnnouncement.type} message here...`}
+                    rows="5"
+                    className={formErrors.content ? "error" : ""}
+                    disabled={loading}
                   />
-                  <div className="content-tips">
-                    <strong>Tips for effective announcements:</strong>
-                    <ul>
-                      <li>Start with the most important information</li>
-                      <li>Use clear, concise language</li>
-                      <li>Include actionable steps if needed</li>
-                      <li>Add contact information for questions</li>
-                    </ul>
-                  </div>
                 </div>
 
-                <div className="form-group">
-                  <label>Attachments</label>
-                  <div className="file-upload-area">
-                    <input
-                      type="file"
-                      id="file-upload"
-                      multiple
-                      onChange={handleFileUpload}
-                      style={{ display: "none" }}
-                    />
-                    <label htmlFor="file-upload" className="file-upload-btn">
-                      📎 Add Files
-                    </label>
-                    <span className="file-hint">
-                      PDF, DOC, JPG, PNG up to 10MB each
+                {/* Audience Info */}
+                <div className="form-info">
+                  <div className="info-box">
+                    <span className="info-icon">ℹ️</span>
+                    <span className="info-text">
+                      This announcement will be sent to{" "}
+                      <strong>all users</strong> immediately.
                     </span>
                   </div>
-
-                  {newAnnouncement.attachments.length > 0 && (
-                    <div className="attachments-preview">
-                      {newAnnouncement.attachments.map((file, index) => (
-                        <div key={index} className="attachment-preview-item">
-                          <span className="file-name">{file}</span>
-                          <button
-                            type="button"
-                            className="remove-file"
-                            onClick={() => removeAttachment(index)}
-                          >
-                            ×
-                          </button>
-                        </div>
-                      ))}
-                    </div>
-                  )}
                 </div>
 
+                {/* Form Actions */}
                 <div className="modal-actions">
                   <button
                     className="btn btn-secondary"
-                    onClick={() => setShowNewAnnouncement(false)}
+                    onClick={resetForm}
+                    disabled={loading}
                   >
                     Cancel
                   </button>
                   <button
                     className="btn btn-primary"
                     onClick={handleSendAnnouncement}
-                    disabled={
-                      !newAnnouncement.title.trim() ||
-                      !newAnnouncement.content.trim()
-                    }
+                    disabled={loading}
                   >
-                    {newAnnouncement.immediateSend
-                      ? "📤 Send Announcement"
-                      : "⏰ Schedule Announcement"}
+                    {loading ? "Sending..." : "📤 Send to All Users"}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {showDeleteModal && (
+        <div
+          className="modal-overlay"
+          onClick={() => setShowDeleteModal(false)}
+        >
+          <div
+            className="modal-container small"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="modal-header">
+              <h3>Delete Announcement</h3>
+              <button
+                className="modal-close"
+                onClick={() => setShowDeleteModal(false)}
+              >
+                ×
+              </button>
+            </div>
+            <div className="modal-content">
+              <div className="delete-confirmation">
+                <div className="warning-icon">⚠️</div>
+                <h4>Are you sure?</h4>
+                <p>This will permanently delete the announcement:</p>
+                <div className="announcement-to-delete">
+                  <strong>{announcementToDelete?.title}</strong>
+                  <p>{announcementToDelete?.content.substring(0, 100)}...</p>
+                </div>
+                <p className="warning-text">This action cannot be undone.</p>
+                <div className="modal-actions">
+                  <button
+                    className="btn btn-secondary"
+                    onClick={() => setShowDeleteModal(false)}
+                    disabled={loading}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    className="btn btn-danger"
+                    onClick={handleDeleteAnnouncement}
+                    disabled={loading}
+                  >
+                    {loading ? "Deleting..." : "Delete"}
                   </button>
                 </div>
               </div>
