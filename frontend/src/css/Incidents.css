@@ -1,0 +1,561 @@
+/* Incidents.css */
+
+.incidents-admin-container {
+  padding: 24px;
+  min-height: 100vh;
+  background: linear-gradient(135deg, #f5f7fa 0%, #e4edf5 100%);
+  font-family: "Segoe UI", -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+.incidents-title {
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: #1a365d;
+  margin-bottom: 2rem;
+  position: relative;
+  display: inline-block;
+}
+
+.incidents-title::after {
+  content: "";
+  position: absolute;
+  bottom: -10px;
+  left: 0;
+  width: 60px;
+  height: 4px;
+  background: linear-gradient(90deg, #4f46e5, #7c3aed);
+  border-radius: 2px;
+}
+
+.incidents-layout {
+  display: grid;
+  grid-template-columns: 1fr 1.5fr;
+  gap: 24px;
+  height: calc(100vh - 120px);
+}
+
+/* Left Panel - Incident List */
+.incident-list-panel {
+  background: white;
+  border-radius: 16px;
+  padding: 24px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  overflow-y: auto;
+  border: 1px solid rgba(226, 232, 240, 0.8);
+}
+
+.section-header {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #2d3748;
+  margin-bottom: 20px;
+  padding-bottom: 12px;
+  border-bottom: 2px solid #f1f5f9;
+  position: relative;
+}
+
+.section-header::after {
+  content: "";
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  width: 40px;
+  height: 2px;
+  background: linear-gradient(90deg, #3b82f6, #8b5cf6);
+}
+
+.incident-card {
+  background: white;
+  border: 2px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 16px;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.incident-card::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 4px;
+  height: 0;
+  background: linear-gradient(180deg, #3b82f6, #8b5cf6);
+  transition: height 0.3s ease;
+}
+
+.incident-card:hover {
+  transform: translateY(-2px);
+  border-color: #c7d2fe;
+  box-shadow: 0 8px 25px rgba(59, 130, 246, 0.15);
+}
+
+.incident-card:hover::before {
+  height: 100%;
+}
+
+.incident-card.active {
+  border-color: #4f46e5;
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+  box-shadow: 0 8px 30px rgba(79, 70, 229, 0.2);
+}
+
+.incident-card.active::before {
+  height: 100%;
+}
+
+.incident-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 12px;
+}
+
+.incident-tag {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #1e293b;
+  margin: 0;
+  line-height: 1.4;
+}
+
+.status-chip {
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 80px;
+  text-align: center;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.status-chip::before {
+  content: "";
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  margin-right: 6px;
+  background: currentColor;
+}
+
+.status-pending {
+  background: linear-gradient(135deg, #fef3c7, #fde68a);
+  color: #92400e;
+  border: 1px solid #fbbf24;
+}
+
+.status-resolved {
+  background: linear-gradient(135deg, #d1fae5, #a7f3d0);
+  color: #065f46;
+  border: 1px solid #10b981;
+}
+
+.status-rejected {
+  background: linear-gradient(135deg, #fee2e2, #fecaca);
+  color: #991b1b;
+  border: 1px solid #ef4444;
+}
+
+.incident-date {
+  font-size: 0.85rem;
+  color: #64748b;
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.incident-date::before {
+  content: "🕒";
+  font-size: 0.8rem;
+}
+
+.incident-desc {
+  color: #475569;
+  font-size: 0.95rem;
+  line-height: 1.5;
+  margin: 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* Right Panel - Details */
+.incident-details-panel {
+  background: white;
+  border-radius: 16px;
+  padding: 32px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  overflow-y: auto;
+  border: 1px solid rgba(226, 232, 240, 0.8);
+}
+
+.empty-panel {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: #94a3b8;
+  text-align: center;
+  padding: 60px 20px;
+}
+
+.empty-panel::before {
+  content: "📋";
+  font-size: 4rem;
+  margin-bottom: 20px;
+  opacity: 0.5;
+}
+
+.detail-content {
+  animation: fadeIn 0.5s ease;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.detail-title {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: #1a365d;
+  margin-bottom: 24px;
+  padding-bottom: 16px;
+  border-bottom: 2px solid #f1f5f9;
+}
+
+.detail-info {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.detail-info p {
+  margin: 0;
+  line-height: 1.6;
+}
+
+.detail-info strong {
+  color: #334155;
+  font-weight: 600;
+  display: inline-block;
+  margin-bottom: 6px;
+  font-size: 0.95rem;
+}
+
+.detail-info p:not(:has(strong)) {
+  color: #475569;
+  background: #f8fafc;
+  padding: 16px;
+  border-radius: 10px;
+  border-left: 4px solid #3b82f6;
+  margin-top: 8px;
+  font-size: 1rem;
+}
+
+.status-chip.large {
+  padding: 10px 24px;
+  font-size: 0.9rem;
+  margin-left: 10px;
+  min-width: 100px;
+}
+
+.evidence-image {
+  width: 100%;
+  max-width: 400px;
+  border-radius: 12px;
+  margin-top: 8px;
+  border: 2px solid #e2e8f0;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  transition: transform 0.3s ease;
+}
+
+.evidence-image:hover {
+  transform: scale(1.02);
+}
+
+/* Status Action Buttons */
+.status-action-buttons {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 16px;
+  margin-top: 32px;
+  padding-top: 32px;
+  border-top: 2px solid #f1f5f9;
+}
+
+.btn-action {
+  padding: 14px 20px;
+  border: none;
+  border-radius: 12px;
+  font-weight: 600;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  position: relative;
+  overflow: hidden;
+}
+
+.btn-action::before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  transition: width 0.6s, height 0.6s;
+}
+
+.btn-action:hover::before {
+  width: 300px;
+  height: 300px;
+}
+
+.btn-action:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+}
+
+.btn-action.pending {
+  background: linear-gradient(135deg, #fbbf24, #f59e0b);
+  color: #78350f;
+}
+
+.btn-action.resolved {
+  background: linear-gradient(135deg, #10b981, #059669);
+  color: white;
+}
+
+.btn-action.rejected {
+  background: linear-gradient(135deg, #ef4444, #dc2626);
+  color: white;
+}
+
+.btn-action::after {
+  font-size: 1.1rem;
+}
+
+.btn-action.pending::after {
+  content: "⏳";
+}
+
+.btn-action.resolved::after {
+  content: "✅";
+}
+
+.btn-action.rejected::after {
+  content: "❌";
+}
+
+/* Scrollbar Styling */
+.incident-list-panel::-webkit-scrollbar,
+.incident-details-panel::-webkit-scrollbar {
+  width: 6px;
+}
+
+.incident-list-panel::-webkit-scrollbar-track,
+.incident-details-panel::-webkit-scrollbar-track {
+  background: #f1f5f9;
+  border-radius: 10px;
+}
+
+.incident-list-panel::-webkit-scrollbar-thumb,
+.incident-details-panel::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, #94a3b8, #64748b);
+  border-radius: 10px;
+}
+
+.incident-list-panel::-webkit-scrollbar-thumb:hover,
+.incident-details-panel::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, #64748b, #475569);
+}
+
+/* Responsive Design */
+@media (max-width: 1024px) {
+  .incidents-layout {
+    grid-template-columns: 1fr;
+    height: auto;
+    gap: 20px;
+  }
+
+  .incident-list-panel,
+  .incident-details-panel {
+    min-height: 400px;
+  }
+}
+
+@media (max-width: 768px) {
+  .incidents-admin-container {
+    padding: 16px;
+  }
+
+  .incidents-title {
+    font-size: 2rem;
+  }
+
+  .status-action-buttons {
+    grid-template-columns: 1fr;
+  }
+
+  .incident-card {
+    padding: 16px;
+  }
+
+  .incident-details-panel {
+    padding: 24px;
+  }
+}
+
+/* Loading State */
+.loading-skeleton {
+  animation: skeleton-loading 1.5s infinite ease-in-out;
+}
+
+@keyframes skeleton-loading {
+  0% {
+    background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+    background-size: 200% 100%;
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+/* Badge for anonymous reports */
+.anonymous-badge {
+  background: linear-gradient(135deg, #c7d2fe, #a5b4fc);
+  color: #3730a3;
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: 10px;
+}
+
+.anonymous-badge::before {
+  content: "👤";
+  font-size: 0.9rem;
+}
+
+/* Location styling */
+.location-display {
+  background: #f1f5f9;
+  padding: 12px 16px;
+  border-radius: 10px;
+  border-left: 4px solid #3b82f6;
+  font-family: "Monaco", "Courier New", monospace;
+  font-size: 0.9rem;
+  color: #475569;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.location-display::before {
+  content: "📍";
+  font-size: 1rem;
+}
+
+/* Empty state enhancements */
+.empty-panel {
+  position: relative;
+  overflow: hidden;
+}
+
+.empty-panel::after {
+  content: "";
+  position: absolute;
+  width: 200px;
+  height: 200px;
+  background: linear-gradient(
+    135deg,
+    rgba(59, 130, 246, 0.1),
+    rgba(139, 92, 246, 0.1)
+  );
+  border-radius: 50%;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 0;
+  animation: pulse 3s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: 0.5;
+    transform: translate(-50%, -50%) scale(1);
+  }
+  50% {
+    opacity: 0.3;
+    transform: translate(-50%, -50%) scale(1.2);
+  }
+}
+
+/* Status indicator dot */
+.status-indicator {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  display: inline-block;
+  margin-right: 8px;
+}
+
+.status-indicator.pending {
+  background: #f59e0b;
+  box-shadow: 0 0 10px rgba(245, 158, 11, 0.5);
+}
+
+.status-indicator.resolved {
+  background: #10b981;
+  box-shadow: 0 0 10px rgba(16, 185, 129, 0.5);
+}
+
+.status-indicator.rejected {
+  background: #ef4444;
+  box-shadow: 0 0 10px rgba(239, 68, 68, 0.5);
+}
+
+/* Incident count badge */
+.incident-count {
+  background: linear-gradient(135deg, #4f46e5, #7c3aed);
+  color: white;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  margin-left: 12px;
+  vertical-align: middle;
+}

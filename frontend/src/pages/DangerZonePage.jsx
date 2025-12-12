@@ -41,7 +41,50 @@ import {
   Filter,
 } from "lucide-react";
 
+<<<<<<< HEAD
 const DangerZonePage = () => {
+=======
+// Sample data
+
+// Sample incidents data
+const initialIncidents = [
+  {
+    id: 1,
+    title: "Phone stolen near parking",
+    type: "theft",
+    time: "2h ago",
+    status: "unresolved",
+    description: "Student reported phone theft while walking to car...",
+    proofImages: ["image1.jpg", "image2.jpg"],
+    location: { lat: 8.8925, lng: 38.808 },
+    reportCount: 5,
+    reportedBy: "Bini",
+    reportedAt: "2024-01-22 14:30",
+    severity: "high",
+    zone: "Main Parking Lot",
+    actionsTaken: "Security notified, investigation in progress",
+  },
+  {
+    id: 2,
+    title: "Fight reported at cafeteria",
+    type: "assault",
+    time: "5h ago",
+    status: "resolved",
+    description:
+      "Student reported a physical altercation between two students...",
+    proofImages: ["image2.jpg"],
+    location: { lat: 8.8925, lng: 38.808 },
+    reportCount: 10,
+    reportedBy: "Amen",
+    reportedAt: "2024-01-22 11:45",
+    severity: "low",
+    Zone: "LT",
+    actionsTaken: "Security notified, investigation in progress",
+  },
+];
+
+const DangerZonesPage = () => {
+>>>>>>> db09c02aa431e57facf4e4b3014662d809feb8fa
   const { isLoaded, loadError } = useLoadScript({
     googleMapsApiKey: "AIzaSyDGOfKLp0FxNKr6BxKHlJPKDcBWji1uGWI",
     libraries: ["places"],
@@ -86,6 +129,19 @@ const DangerZonePage = () => {
     fetchZones();
   }, []);
 
+<<<<<<< HEAD
+=======
+  // Form States
+  const [newZone, setNewZone] = useState({
+    name: "",
+    severity: "medium",
+    description: "",
+    radius: 100,
+    status: "active",
+    types: [],
+    location: { coordinates: [8.8913, 38.8089] },
+  });
+>>>>>>> db09c02aa431e57facf4e4b3014662d809feb8fa
 
   useEffect(() => {
     const fetchCardConfig = async () => {
@@ -152,6 +208,7 @@ const DangerZonePage = () => {
   // Handle zone creation with Formik
   const handleCreateZoneSubmit = async (values, { setSubmitting, resetForm }) => {
     try {
+<<<<<<< HEAD
       
       // Format data for API
       const zoneData = {
@@ -169,13 +226,29 @@ const DangerZonePage = () => {
       console.log("Creating zone:", zoneData);
       
       const response = await api.post("/dangerArea", zoneData);
+=======
+      const response = await api.post("/dangerArea", newZone);
+>>>>>>> db09c02aa431e57facf4e4b3014662d809feb8fa
 
       const createdZone = response.data.data;
       setZones(prev => [...prev, createdZone]);
       setShowCreateModal(false);
+<<<<<<< HEAD
       resetForm();
       setSelectedLocation({ lat: 8.8913, lng: 38.8089 });
       
+=======
+      // Reset new zone form
+      setNewZone({
+        name: "",
+        severity: "medium",
+        description: "",
+        radius: 100,
+        status: "active",
+        types: [],
+        location: { coordinates: [8.8913, 38.8089] },
+      });
+>>>>>>> db09c02aa431e57facf4e4b3014662d809feb8fa
     } catch (error) {
       console.error("Error creating danger zone:", error);
       alert(`Failed to create zone: ${error.response?.data?.message || error.message}`);
@@ -186,6 +259,7 @@ const DangerZonePage = () => {
 
   // Handle zone deletion
   const handleDeleteZone = async () => {
+<<<<<<< HEAD
     if (!zoneToDelete) return;
     
     try {
@@ -200,17 +274,90 @@ const DangerZonePage = () => {
       setShowDeleteModal(false);
       setZoneToDelete(null);
       setSelectedZone(null);
+=======
+    // Add async
+    if (!zoneToDelete) return;
+
+    try {
+      const response = await api.delete(`/dangerArea/${zoneToDelete._id}`); // Add await
+
+      console.log("Delete response:", response.data); // Add logging
+
+      // Only remove from UI if backend succeeded
+      if (response.data.success) {
+        setZones(zones.filter((zone) => zone._id !== zoneToDelete._id));
+      } else {
+        throw new Error(response.data.message || "Delete failed");
+      }
+
+      setShowDeleteModal(false);
+      setZoneToDelete(null);
+    } catch (error) {
+      console.error("Error deleting danger zone:", error);
+      console.error("Error response:", error.response?.data);
+      alert(
+        "Failed to delete: " + (error.response?.data?.message || error.message)
+      );
+      // Don't remove from UI since backend failed
+    }
+  };
+
+  // Handle incident deletion
+  const handleDeleteIncident = async () => {
+    if (!incidentToDelete) return;
+    try {
+      const response = await api.delete(`/incident/${incidentToDelete._id}`);
+      setIncidents(
+        incidents.filter((incident) => incident._id !== incidentToDelete._id)
+      );
+      setShowIncidentDeleteModal(false);
+      setIncidentToDelete(null);
+>>>>>>> db09c02aa431e57facf4e4b3014662d809feb8fa
     } catch (error) {
       console.error("Error deleting danger zone:", error);
       alert("Failed to delete: " + (error.response?.data?.message || error.message));
     }
   };
 
+  const toGoogleCoords = (coords) => ({
+    lat: coords[1],
+    lng: coords[0],
+  });
+
+  const toGeoJSON = (lat, lng) => ({
+    coordinates: [lng, lat],
+  });
+
   // Handle map click for location selection
   const handleMapClick = (e) => {
     const lat = e.latLng.lat();
     const lng = e.latLng.lng();
+<<<<<<< HEAD
     setSelectedLocation({ lat, lng });
+=======
+
+    const geo = toGeoJSON(lat, lng);
+
+    if (showCreateModal) {
+      setNewZone({ ...newZone, location: geo });
+    } else if (showEditModal) {
+      setEditZone({ ...editZone, location: geo });
+    }
+  };
+
+  // Initialize edit form
+  const openEditModal = (zone) => {
+    setEditZone({
+      ...zone,
+      location: {
+        coordinates: [
+          zone.location.coordinates[1],
+          zone.location.coordinates[0],
+        ],
+      },
+    });
+    setShowEditModal(true);
+>>>>>>> db09c02aa431e57facf4e4b3014662d809feb8fa
   };
 
   // Initialize delete confirmation
@@ -362,8 +509,10 @@ const DangerZonePage = () => {
                   onClick={() => {
                     setSelectedZone(zone);
                     setMapCenter({
-                      lat: zone.location.coordinates[1],
-                      lng: zone.location.coordinates[0],
+                      coordinates: [
+                        zone.location.coordinates[1],
+                        zone.location.coordinates[0],
+                      ],
                     });
                     setMapZoom(17);
                   }}
@@ -440,11 +589,8 @@ const DangerZonePage = () => {
                 {/* Markers */}
                 {zones.map((zone) => (
                   <Marker
-                    key={zone._id}
-                    position={{
-                      lat: zone.location.coordinates[1],
-                      lng: zone.location.coordinates[0],
-                    }}
+                    key={zone.id}
+                    position={toGoogleCoords(zone.location.coordinates)}
                     icon={{
                       path: window.google.maps.SymbolPath.CIRCLE,
                       fillColor: getSeverityColor(zone.severity),
@@ -455,10 +601,7 @@ const DangerZonePage = () => {
                     }}
                     onClick={() => {
                       setSelectedZone(zone);
-                      setMapCenter({
-                        lat: zone.location.coordinates[1],
-                        lng: zone.location.coordinates[0],
-                      });
+                      setMapCenter(toGoogleCoords(zone.location.coordinates));
                     }}
                   />
                 ))}
@@ -815,6 +958,140 @@ const DangerZonePage = () => {
             </div>
           </div>
         )}
+      </Modal>
+
+      {/* DELETE INCIDENT CONFIRMATION MODAL */}
+      <Modal
+        isOpen={showIncidentDeleteModal}
+        onClose={() => {
+          setShowIncidentDeleteModal(false);
+          setIncidentToDelete(null);
+        }}
+        title="Confirm Delete"
+        size="small"
+      >
+        {incidentToDelete && (
+          <div className="delete-confirmation">
+            <div className="warning-icon">
+              <AlertTriangle size={48} />
+            </div>
+            <h4>Delete Incident Report</h4>
+            <p>
+              Are you sure you want to delete{" "}
+              <strong>{incidentToDelete.title}</strong>?
+            </p>
+            <p className="warning-text">This action cannot be undone.</p>
+            <div className="modal-actions">
+              <button
+                className="btn btn-secondary"
+                onClick={() => {
+                  setShowIncidentDeleteModal(false);
+                  setIncidentToDelete(null);
+                }}
+              >
+                <X size={16} />
+                Cancel
+              </button>
+              <button className="btn btn-danger" onClick={handleDeleteIncident}>
+                <Trash2 size={16} />
+                Delete Incident
+              </button>
+            </div>
+          </div>
+        )}
+      </Modal>
+
+      {/* MAP SELECTION MODAL */}
+      <Modal
+        isOpen={showMapModal}
+        onClose={() => setShowMapModal(false)}
+        title="Select Location on Map"
+        size="large"
+      >
+        <div className="map-selection-modal">
+          <div className="map-instructions">
+            <p>
+              Click on the map to select a location. The selected coordinates
+              will be used for the danger zone.
+            </p>
+            <div className="selected-coordinates">
+              <strong>Selected Location:</strong>
+              <span>
+                Lat:{" "}
+                {(showCreateModal
+                  ? newZone.location.coordinates[0]
+                  : editZone?.location.coordinates[0] || 0
+                ).toFixed(6)}
+              </span>
+              <span>
+                Lng:{" "}
+                {(showCreateModal
+                  ? newZone.location.coordinates[1]
+                  : editZone?.location.coordinates[1] || 0
+                ).toFixed(6)}
+              </span>
+            </div>
+          </div>
+
+          <div className="map-container-small">
+            {isLoaded ? (
+              <GoogleMap
+                mapContainerStyle={{ width: "100%", height: "400px" }}
+                center={
+                  showCreateModal
+                    ? newZone.location
+                    : editZone?.location || mapCenter
+                }
+                zoom={17}
+                options={{
+                  streetViewControl: false,
+                  mapTypeControl: true,
+                  fullscreenControl: false,
+                }}
+                onClick={handleMapClick}
+              >
+                {/* Marker for selected location */}
+                <Marker
+                  position={
+                    showCreateModal
+                      ? newZone.location
+                      : editZone?.location || mapCenter
+                  }
+                  icon={{
+                    path: window.google.maps.SymbolPath.CIRCLE,
+                    fillColor: "#FF3B30",
+                    fillOpacity: 1,
+                    strokeColor: "#FFFFFF",
+                    strokeWeight: 2,
+                    scale: 8,
+                  }}
+                />
+              </GoogleMap>
+            ) : (
+              <div className="map-loading">
+                <Loader2 className="loading-spinner" size={24} />
+                <p>Loading map...</p>
+              </div>
+            )}
+          </div>
+
+          <div className="modal-actions">
+            <button
+              className="btn btn-secondary"
+              onClick={() => setShowMapModal(false)}
+            >
+              <X size={16} />
+              Cancel
+            </button>
+            <button
+              className="btn btn-primary"
+              onClick={() => setShowMapModal(false)}
+            >
+              <Check size={16} />
+              Use This Location
+            </button>
+          </div>
+        </div>
       </Modal>
     </div>
   );
