@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import {
   GoogleMap,
   Marker,
@@ -7,6 +7,7 @@ import {
 } from "@react-google-maps/api";
 import "../css/DangerZonePage.css";
 import Modal from "../component/Modal";
+import api from "../services/api";
 
 // Import Lucide Icons
 import {
@@ -49,7 +50,7 @@ import {
 } from "lucide-react";
 
 // Sample data
-const initialZones = [
+/* const initialZones = [
   {
     id: 1,
     name: "Main Parking Lot",
@@ -93,7 +94,7 @@ const initialZones = [
     updatedAt: "2024-01-22",
   },
 ];
-
+*/
 // Sample incidents data
 const initialIncidents = [
   {
@@ -138,7 +139,7 @@ const DangerZonesPage = () => {
   });
 
   // State Management
-  const [zones, setZones] = useState(initialZones);
+  const [zones, setZones] = useState([]);
   const [incidents, setIncidents] = useState(initialIncidents);
   const [filterSeverity, setFilterSeverity] = useState("all");
   const [filterStatus, setFilterStatus] = useState("all");
@@ -157,6 +158,26 @@ const DangerZonesPage = () => {
   const [showIncidentDeleteModal, setShowIncidentDeleteModal] = useState(false);
   const [zoneToDelete, setZoneToDelete] = useState(null);
   const [incidentToDelete, setIncidentToDelete] = useState(null);
+
+  // Error state
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    const fetchZones = async () => {
+      try {
+        // Fetch zones from API
+        const response = await api.get("/dangerArea");
+        console.log("zones", response.data.data);
+
+        setZones(response.data.data);
+      } catch (error) {
+        setError("Failed to load danger zones.");
+        console.error("Error fetching danger zones:", error);
+      }
+    };
+
+    fetchZones();
+  }, []);
 
   // Form States
   const [newZone, setNewZone] = useState({
@@ -247,43 +268,54 @@ const DangerZonesPage = () => {
   };
 
   // Handle zone creation
-  const handleCreateZone = () => {
-    const newZoneObj = {
-      id: Date.now(),
-      ...newZone,
-      incidents: 0,
-      types: newZone.types || [],
-      lastIncident: "Never",
-      createdAt: new Date().toISOString().split("T")[0],
-      updatedAt: new Date().toISOString().split("T")[0],
-    };
+  const handleCreateZone = async (e) => {
+    e.preventDefault();
+    try {
+      const token = localStorage.getItem("token");
+      const response = await api.post("/dangerArea", newZone, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
 
-    setZones([...zones, newZoneObj]);
-    setNewZone({
-      name: "",
-      severity: "medium",
-      description: "",
-      radius: 100,
-      status: "active",
-      types: [],
-      location: { lat: 8.8913, lng: 38.8089 },
-    });
-    setShowCreateModal(false);
+      const createdZone = response.data.data;
+      setZones([...zones, createdZone]);
+      setShowCreateModal(false);
+      // Reset new zone form
+      setNewZone({
+        name: "",
+        severity: "medium",
+        description: "",
+        radius: 100,
+        status: "active",
+        types: [],
+        location: { lat: 8.8913, lng: 38.8089 },
+      });
+    } catch (error) {
+      console.error("Error creating danger zone:", error);
+    }
   };
 
   // Handle zone edit
-  const handleEditZone = () => {
+  const handleEditZone = async () => {
     if (!editZone) return;
+    try {
+      const response = await api.put(`/dangerArea/${editZone.id}`, editZone);
+      const updatedZone = response.data.data;
 
-    setZones(
-      zones.map((zone) =>
-        zone.id === editZone.id
-          ? { ...editZone, updatedAt: new Date().toISOString().split("T")[0] }
-          : zone
-      )
-    );
-    setShowEditModal(false);
-    setEditZone(null);
+      setZones(
+        zones.map((zone) =>
+          zone.id === editZone.id
+            ? {
+                ...updatedZone,
+                updatedAt: new Date().toISOString().split("T")[0],
+              }
+            : zone
+        )
+      );
+      setShowEditModal(false);
+      setEditZone(null);
+    } catch (error) {
+      console.error("Error updating danger zone:", error);
+    }
   };
 
   // Handle zone deletion
@@ -321,7 +353,13 @@ const DangerZonesPage = () => {
 
   // Initialize edit form
   const openEditModal = (zone) => {
-    setEditZone({ ...zone });
+    setEditZone({
+      ...zone,
+      location: {
+        lat: zone.location.coordinates[1],
+        lng: zone.location.coordinates[0],
+      },
+    });
     setShowEditModal(true);
   };
 
@@ -483,7 +521,10 @@ const DangerZonesPage = () => {
                   }`}
                   onClick={() => {
                     setSelectedZone(zone);
-                    setMapCenter(zone.location);
+                    setMapCenter({
+                      lat: zone.location.coordinates[1],
+                      lng: zone.location.coordinates[0],
+                    });
                     setMapZoom(17);
                   }}
                 >
@@ -507,8 +548,9 @@ const DangerZonesPage = () => {
                         <Navigation size={12} /> {zone.radius}m radius
                       </span>
                       <span>
-                        <MapPin size={12} /> {zone.location.lat.toFixed(4)},{" "}
-                        {zone.location.lng.toFixed(4)}
+                        <MapPin size={12} />{" "}
+                        {zone?.location?.coordinates[1].toFixed(4)},{" "}
+                        {zone?.location?.coordinates[0].toFixed(4)}
                       </span>
                     </div>
                   </div>
@@ -568,7 +610,10 @@ const DangerZonesPage = () => {
                 {zones.map((zone) => (
                   <Marker
                     key={zone.id}
-                    position={zone.location}
+                    position={{
+                      lat: zone.location.coordinates[1],
+                      lng: zone.location.coordinates[0],
+                    }}
                     icon={{
                       path: window.google.maps.SymbolPath.CIRCLE,
                       fillColor: getSeverityColor(zone.severity),
@@ -587,7 +632,10 @@ const DangerZonesPage = () => {
                 {/* Info Window */}
                 {selectedZone && (
                   <InfoWindow
-                    position={selectedZone.location}
+                    position={{
+                      lat: selectedZone.location.coordinates[1],
+                      lng: selectedZone.location.coordinates[0],
+                    }}
                     onCloseClick={() => setSelectedZone(null)}
                   >
                     <div className="info-window">
@@ -934,11 +982,7 @@ const DangerZonesPage = () => {
               <X size={16} />
               Cancel
             </button>
-            <button
-              className="btn btn-primary"
-              onClick={handleCreateZone}
-              disabled={!newZone.name.trim() || !newZone.description.trim()}
-            >
+            <button className="btn btn-primary" onClick={handleCreateZone}>
               <Check size={16} />
               Create Zone
             </button>
@@ -965,9 +1009,9 @@ const DangerZonesPage = () => {
               </label>
               <input
                 type="text"
-                value={editZone.name}
+                value={editZone.zoneName}
                 onChange={(e) =>
-                  setEditZone({ ...editZone, name: e.target.value })
+                  setEditZone({ ...editZone, zoneName: e.target.value })
                 }
                 placeholder="Enter zone name"
               />
@@ -1013,25 +1057,6 @@ const DangerZonesPage = () => {
             <div className="form-row">
               <div className="form-group">
                 <label>
-                  <Radio size={16} />
-                  Radius (meters) *
-                </label>
-                <input
-                  type="range"
-                  min="50"
-                  max="500"
-                  value={editZone.radius}
-                  onChange={(e) =>
-                    setEditZone({
-                      ...editZone,
-                      radius: parseInt(e.target.value),
-                    })
-                  }
-                />
-                <div className="range-value">{editZone.radius}m</div>
-              </div>
-              <div className="form-group">
-                <label>
                   <Flag size={16} />
                   Status *
                 </label>
@@ -1055,8 +1080,8 @@ const DangerZonesPage = () => {
               </label>
               <div className="location-selector">
                 <div className="location-info">
-                  <span>Lat: {editZone.location.lat.toFixed(6)}</span>
-                  <span>Lng: {editZone.location.lng.toFixed(6)}</span>
+                  <span>Lat: {editZone?.location?.lat.toFixed(6)}</span>
+                  <span>Lng: {editZone?.location?.lng.toFixed(6)}</span>
                 </div>
                 <button
                   type="button"
@@ -1078,9 +1103,12 @@ const DangerZonesPage = () => {
                 Description *
               </label>
               <textarea
-                value={editZone.description}
+                value={editZone.types.join("\n")}
                 onChange={(e) =>
-                  setEditZone({ ...editZone, description: e.target.value })
+                  setEditZone({
+                    ...editZone,
+                    types: e.target.value.split("\n"),
+                  })
                 }
                 placeholder="Describe why this area is dangerous..."
                 rows="4"
@@ -1101,7 +1129,11 @@ const DangerZonesPage = () => {
               <button
                 className="btn btn-primary"
                 onClick={handleEditZone}
-                disabled={!editZone.name.trim() || !editZone.description.trim()}
+                disabled={
+                  /* !editZone.zoneName.trim() || */ !editZone.types.map(
+                    (type) => type.trim()
+                  ).length
+                }
               >
                 <Check size={16} />
                 Save Changes
