@@ -19,6 +19,7 @@ const Login = () => {
       if (response.data.success) {
         // Store token in localStorage
         localStorage.setItem("token", response.data.data.token);
+        localStorage.setItem("refreshToken", response.data.data.refreshToken);
         // Redirect to dashboard
         navigate("/dashboard");
       }

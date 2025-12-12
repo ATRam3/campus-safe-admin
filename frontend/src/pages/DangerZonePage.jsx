@@ -179,6 +179,22 @@ const DangerZonesPage = () => {
     fetchZones();
   }, []);
 
+
+  useEffect(() => {
+    const fetchIncidents = async () => {
+      try {
+        const response = await api.get("/report");
+        setIncidents(response.data.data);
+
+        setSelectedIncidentDetails(null);
+      } catch (error) {
+        setError("Failed to load incidents.");
+        console.log("Error fetching incidents:", error);
+      }
+    }
+    fetchIncidents
+  }, [])
+
   // Form States
   const [newZone, setNewZone] = useState({
     name: "",
@@ -272,9 +288,7 @@ const DangerZonesPage = () => {
     e.preventDefault();
     try {
       const token = localStorage.getItem("token");
-      const response = await api.post("/dangerArea", newZone, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const response = await api.post("/dangerArea", newZone);
 
       const createdZone = response.data.data;
       setZones([...zones, createdZone]);
