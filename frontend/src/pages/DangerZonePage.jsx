@@ -320,17 +320,27 @@ const DangerZonesPage = () => {
 
   // Handle zone deletion
   const handleDeleteZone = () => {
+
     if (!zoneToDelete) return;
 
-    setZones(zones.filter((zone) => zone.id !== zoneToDelete.id));
-    setShowDeleteModal(false);
-    setZoneToDelete(null);
-    setSelectedZone(null);
+    try{ 
+      const response = api.delete(`/dangerArea/${zoneToDelete.id}`);
+      setZones(zones.filter((zone) => zone.id !== zoneToDelete.id));  
+      setShowDeleteModal(false);
+      setZoneToDelete(null);
+    } catch (error){      
+      console.error("Error deleting danger zone:", error);
+    }
+
+    
   };
 
   // Handle incident deletion
   const handleDeleteIncident = () => {
     if (!incidentToDelete) return;
+
+    const response = api.delete(`/incidents/${incidentToDelete.id}`);
+    setIncidents()
 
     setIncidents(
       incidents.filter((incident) => incident.id !== incidentToDelete.id)
