@@ -15,10 +15,11 @@ const Login = () => {
         email,
         password,
       });
-
-      if (response.data.success) {
+      console.log("Login response:", response.data);
+      if (response.data) {
         // Store token in localStorage
         localStorage.setItem("token", response.data.data.token);
+        localStorage.setItem("refreshToken", response.data.data.refreshToken);
         // Redirect to dashboard
         navigate("/dashboard");
       }

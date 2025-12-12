@@ -50,51 +50,7 @@ import {
 } from "lucide-react";
 
 // Sample data
-/* const initialZones = [
-  {
-    id: 1,
-    name: "Main Parking Lot",
-    location: { lat: 8.8925, lng: 38.808 },
-    severity: "high",
-    description: "Poor lighting and multiple theft incidents reported",
-    incidents: 5,
-    status: "active",
-    radius: 150,
-    types: ["theft", "assault"],
-    lastIncident: "2 hours ago",
-    createdAt: "2024-01-15",
-    updatedAt: "2024-01-20",
-  },
-  {
-    id: 2,
-    name: "North Dorms Alley",
-    location: { lat: 8.893, lng: 38.807 },
-    severity: "medium",
-    description: "Poorly lit pathway with reported harassment cases",
-    incidents: 3,
-    status: "active",
-    radius: 100,
-    types: ["harassment", "theft"],
-    lastIncident: "1 day ago",
-    createdAt: "2024-01-18",
-    updatedAt: "2024-01-22",
-  },
-  {
-    id: 3,
-    name: "Library Back Entrance",
-    location: { lat: 8.891, lng: 38.809 },
-    severity: "low",
-    description: "Occasional suspicious activity",
-    incidents: 1,
-    status: "active",
-    radius: 80,
-    types: ["suspicious"],
-    lastIncident: "3 days ago",
-    createdAt: "2024-01-20",
-    updatedAt: "2024-01-22",
-  },
-];
-*/
+
 // Sample incidents data
 const initialIncidents = [
   {
@@ -187,7 +143,7 @@ const DangerZonesPage = () => {
     radius: 100,
     status: "active",
     types: [],
-    location: { lat: 8.8913, lng: 38.8089 },
+    location: { coordinates: [8.8913, 38.8089] },
   });
 
   const [editZone, setEditZone] = useState(null);
@@ -271,10 +227,7 @@ const DangerZonesPage = () => {
   const handleCreateZone = async (e) => {
     e.preventDefault();
     try {
-      const token = localStorage.getItem("token");
-      const response = await api.post("/dangerArea", newZone, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const response = await api.post("/dangerArea", newZone);
 
       const createdZone = response.data.data;
       setZones([...zones, createdZone]);
@@ -287,7 +240,7 @@ const DangerZonesPage = () => {
         radius: 100,
         status: "active",
         types: [],
-        location: { lat: 8.8913, lng: 38.8089 },
+        location: { coordinates: [8.8913, 38.8089] },
       });
     } catch (error) {
       console.error("Error creating danger zone:", error);
@@ -319,55 +272,69 @@ const DangerZonesPage = () => {
   };
 
   // Handle zone deletion
-  const handleDeleteZone = async () => {  // Add async
-  if (!zoneToDelete) return;
+  const handleDeleteZone = async () => {
+    // Add async
+    if (!zoneToDelete) return;
 
-  try { 
-    const response = await api.delete(`/dangerArea/${zoneToDelete._id}`);  // Add await
-    
-    console.log("Delete response:", response.data);  // Add logging
-    
-    // Only remove from UI if backend succeeded
-    if (response.data.success) {
-      setZones(zones.filter((zone) => zone._id !== zoneToDelete._id));
-    } else {
-      throw new Error(response.data.message || "Delete failed");
-    }
-    
-    setShowDeleteModal(false);
-    setZoneToDelete(null);
-  } catch (error) {      
+    try {
+      const response = await api.delete(`/dangerArea/${zoneToDelete._id}`); // Add await
+
+      console.log("Delete response:", response.data); // Add logging
+
+      // Only remove from UI if backend succeeded
+      if (response.data.success) {
+        setZones(zones.filter((zone) => zone._id !== zoneToDelete._id));
+      } else {
+        throw new Error(response.data.message || "Delete failed");
+      }
+
+      setShowDeleteModal(false);
+      setZoneToDelete(null);
+    } catch (error) {
       console.error("Error deleting danger zone:", error);
       console.error("Error response:", error.response?.data);
-      alert("Failed to delete: " + (error.response?.data?.message || error.message));
+      alert(
+        "Failed to delete: " + (error.response?.data?.message || error.message)
+      );
       // Don't remove from UI since backend failed
     }
   };
 
   // Handle incident deletion
-  const handleDeleteIncident = async() => {
+  const handleDeleteIncident = async () => {
     if (!incidentToDelete) return;
     try {
       const response = await api.delete(`/incident/${incidentToDelete._id}`);
-      setIncidents( incidents.filter((incident) => incident._id !== incidentToDelete._id));
+      setIncidents(
+        incidents.filter((incident) => incident._id !== incidentToDelete._id)
+      );
       setShowIncidentDeleteModal(false);
       setIncidentToDelete(null);
     } catch (error) {
       console.error("Error deleting incident:", error);
     }
-
-    
   };
+
+  const toGoogleCoords = (coords) => ({
+    lat: coords[1],
+    lng: coords[0],
+  });
+
+  const toGeoJSON = (lat, lng) => ({
+    coordinates: [lng, lat],
+  });
 
   // Handle map click for location selection
   const handleMapClick = (e) => {
     const lat = e.latLng.lat();
     const lng = e.latLng.lng();
 
+    const geo = toGeoJSON(lat, lng);
+
     if (showCreateModal) {
-      setNewZone({ ...newZone, location: { lat, lng } });
-    } else if (showEditModal && editZone) {
-      setEditZone({ ...editZone, location: { lat, lng } });
+      setNewZone({ ...newZone, location: geo });
+    } else if (showEditModal) {
+      setEditZone({ ...editZone, location: geo });
     }
   };
 
@@ -376,8 +343,10 @@ const DangerZonesPage = () => {
     setEditZone({
       ...zone,
       location: {
-        lat: zone.location.coordinates[1],
-        lng: zone.location.coordinates[0],
+        coordinates: [
+          zone.location.coordinates[1],
+          zone.location.coordinates[0],
+        ],
       },
     });
     setShowEditModal(true);
@@ -542,8 +511,10 @@ const DangerZonesPage = () => {
                   onClick={() => {
                     setSelectedZone(zone);
                     setMapCenter({
-                      lat: zone.location.coordinates[1],
-                      lng: zone.location.coordinates[0],
+                      coordinates: [
+                        zone.location.coordinates[1],
+                        zone.location.coordinates[0],
+                      ],
                     });
                     setMapZoom(17);
                   }}
@@ -630,10 +601,7 @@ const DangerZonesPage = () => {
                 {zones.map((zone) => (
                   <Marker
                     key={zone.id}
-                    position={{
-                      lat: zone.location.coordinates[1],
-                      lng: zone.location.coordinates[0],
-                    }}
+                    position={toGoogleCoords(zone.location.coordinates)}
                     icon={{
                       path: window.google.maps.SymbolPath.CIRCLE,
                       fillColor: getSeverityColor(zone.severity),
@@ -644,7 +612,7 @@ const DangerZonesPage = () => {
                     }}
                     onClick={() => {
                       setSelectedZone(zone);
-                      setMapCenter(zone.location);
+                      setMapCenter(toGoogleCoords(zone.location.coordinates));
                     }}
                   />
                 ))}
@@ -962,8 +930,8 @@ const DangerZonesPage = () => {
             </label>
             <div className="location-selector">
               <div className="location-info">
-                <span>Lat: {newZone.location.lat.toFixed(6)}</span>
-                <span>Lng: {newZone.location.lng.toFixed(6)}</span>
+                <span>Lat: {newZone.location.coordinates[1].toFixed(6)}</span>
+                <span>Lng: {newZone.location.coordinates[0].toFixed(6)}</span>
               </div>
               <button
                 type="button"
@@ -1100,8 +1068,12 @@ const DangerZonesPage = () => {
               </label>
               <div className="location-selector">
                 <div className="location-info">
-                  <span>Lat: {editZone?.location?.lat.toFixed(6)}</span>
-                  <span>Lng: {editZone?.location?.lng.toFixed(6)}</span>
+                  <span>
+                    Lat: {editZone.location.coordinates[1].toFixed(6)}
+                  </span>
+                  <span>
+                    Lng: {editZone.location.coordinates[0].toFixed(6)}
+                  </span>
                 </div>
                 <button
                   type="button"
@@ -1266,15 +1238,15 @@ const DangerZonesPage = () => {
               <span>
                 Lat:{" "}
                 {(showCreateModal
-                  ? newZone.location.lat
-                  : editZone?.location.lat || 0
+                  ? newZone.location.coordinates[0]
+                  : editZone?.location.coordinates[0] || 0
                 ).toFixed(6)}
               </span>
               <span>
                 Lng:{" "}
                 {(showCreateModal
-                  ? newZone.location.lng
-                  : editZone?.location.lng || 0
+                  ? newZone.location.coordinates[1]
+                  : editZone?.location.coordinates[1] || 0
                 ).toFixed(6)}
               </span>
             </div>
