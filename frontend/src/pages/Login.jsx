@@ -1,11 +1,12 @@
 import React, { useState } from "react";
 import "../css/Login.css"; // import the CSS file
 import api from "../services/api";
+import { useNavigate } from "react-router-dom";
 
 const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-
+  const navigate = useNavigate();
   const handleLogin = async (e) => {
     e.preventDefault();
 
@@ -15,7 +16,12 @@ const Login = () => {
         password,
       });
 
-      console.log("response data:", response.data);
+      if (response.data.success) {
+        // Store token in localStorage
+        localStorage.setItem("token", response.data.token);
+        // Redirect to dashboard
+        navigate("/dashboard");
+      }
     } catch (error) {
       console.error("Login error:", error);
     }

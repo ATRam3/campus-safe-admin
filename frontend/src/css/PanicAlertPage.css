@@ -313,6 +313,27 @@
 .info-window strong {
   color: #2d3748;
 }
+.container {
+  display: flex;
+  justify-content: space-between;
+}
+
+.status-toggle-btn {
+  margin-left: 10px;
+  padding: 4px 12px;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+  width: 150px;
+  height: 30px;
+}
+
+.status-toggle-btn:hover {
+  background-color: #0056b3;
+}
 
 /* Responsive */
 @media (max-width: 1024px) {

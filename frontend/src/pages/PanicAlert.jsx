@@ -53,6 +53,8 @@ const PanicAlertsPage = () => {
   });
 
   const [alerts, setAlerts] = useState(initialAlerts);
+  const [resolved, setResolved] = useState(false);
+  const [resolvedAlerts, setResolvedAlerts] = useState([]);
   const [selectedAlert, setSelectedAlert] = useState(initialAlerts[0]);
   const [mapCenter] = useState({ lat: 8.8913, lng: 38.8089 });
   const [mapZoom] = useState(16);
@@ -60,6 +62,26 @@ const PanicAlertsPage = () => {
   // Handle alert click
   const handleAlertClick = (alert) => {
     setSelectedAlert(alert);
+  };
+
+  const toggleAlertStatus = (alertId) => {
+    setAlerts((prevAlerts) =>
+      prevAlerts.map((alert) => {
+        if (alert.id === alertId) {
+          const newStatus = alert.status === "active" ? "resolved" : "active";
+          return { ...alert, status: newStatus };
+        }
+        return alert;
+      })
+    );
+
+    // Also update selectedAlert if it's the one being toggled
+    if (selectedAlert && selectedAlert.id === alertId) {
+      setSelectedAlert((prev) => ({
+        ...prev,
+        status: prev.status === "active" ? "resolved" : "active",
+      }));
+    }
   };
 
   return (
@@ -155,7 +177,19 @@ const PanicAlertsPage = () => {
               {/* Selected Alert Details */}
               {selectedAlert && (
                 <div className="alert-details">
-                  <h3>Selected Alert Details</h3>
+                  <div className="container">
+                    <h3>Selected Alert Details</h3>
+                    <button
+                      className="status-toggle-btn"
+                      onClick={() => toggleAlertStatus(selectedAlert.id)}
+                    >
+                      Mark as{" "}
+                      {selectedAlert.status === "active"
+                        ? "Resolved"
+                        : "Active"}
+                    </button>
+                  </div>
+
                   <div className="details-grid">
                     <div className="detail-item">
                       <label>Name:</label>

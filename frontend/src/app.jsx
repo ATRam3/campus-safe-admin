@@ -17,6 +17,7 @@ import Announcements from "./pages/Announcements.jsx";
 import Users from "./pages/Users.jsx";
 
 import DangerZonePage from "./pages/DangerZonePage.jsx";
+import Settings from "./pages/Settings.jsx";
 
 const RequireAuth = ({ children }) => {
   const token = localStorage.getItem("token");
@@ -30,11 +31,17 @@ const App = () => {
   return (
     <Router>
       <Routes>
-        {/* <Route path="/login" element={<Login />} /> */}
+        <Route path="/login" element={<Login />} />
 
         {/* Protected Routes */}
-        <Route element={<Layout />}>
-          <Route path="/" element={<Navigate to="/dashboard" replace />} />
+        <Route
+          element={
+            <RequireAuth>
+              <Layout />
+            </RequireAuth>
+          }
+        >
+          <Route path="/" element={<Navigate to="/dashboard" />} />
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/danger-zones" element={<DangerZonePage />} />
           <Route path="/panic-alerts" element={<PanicAlerts />} />
@@ -42,8 +49,7 @@ const App = () => {
           <Route path="/announcements" element={<Announcements />} />
           <Route path="/users" element={<Users />} />
           <Route path="/analytics" element={<div>Analytics Page</div>} />
-          <Route path="/settings" element={<div>Settings Page</div>} />
-          <Route path="/login" element={<Login />} />
+          <Route path="/settings" element={<Settings />} />
         </Route>
       </Routes>
     </Router>
