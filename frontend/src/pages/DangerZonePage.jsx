@@ -41,9 +41,6 @@ import {
   Filter,
 } from "lucide-react";
 
-<<<<<<< HEAD
-const DangerZonePage = () => {
-=======
 // Sample data
 
 // Sample incidents data
@@ -83,8 +80,7 @@ const initialIncidents = [
   },
 ];
 
-const DangerZonesPage = () => {
->>>>>>> db09c02aa431e57facf4e4b3014662d809feb8fa
+const DangerZonePage = () => {
   const { isLoaded, loadError } = useLoadScript({
     googleMapsApiKey: "AIzaSyDGOfKLp0FxNKr6BxKHlJPKDcBWji1uGWI",
     libraries: ["places"],
@@ -102,13 +98,19 @@ const DangerZonesPage = () => {
   const [mapZoom, setMapZoom] = useState(16);
   const [showIncidentDetails, setShowIncidentDetails] = useState(false);
   const [selectedIncidentDetails, setSelectedIncidentDetails] = useState(null);
+  const [incidentToDelete, setIncidentToDelete] = useState(null);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editZone, setEditZone] = useState(null);
 
   // Modal States
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [showMapModal, setShowMapModal] = useState(false);
   const [zoneToDelete, setZoneToDelete] = useState(null);
-  const [selectedLocation, setSelectedLocation] = useState({ lat: 8.8913, lng: 38.8089 });
+  const [selectedLocation, setSelectedLocation] = useState({
+    lat: 8.8913,
+    lng: 38.8089,
+  });
 
   // Error state
   const [error, setError] = useState(null);
@@ -129,8 +131,6 @@ const DangerZonesPage = () => {
     fetchZones();
   }, []);
 
-<<<<<<< HEAD
-=======
   // Form States
   const [newZone, setNewZone] = useState({
     name: "",
@@ -141,7 +141,6 @@ const DangerZonesPage = () => {
     types: [],
     location: { coordinates: [8.8913, 38.8089] },
   });
->>>>>>> db09c02aa431e57facf4e4b3014662d809feb8fa
 
   useEffect(() => {
     const fetchCardConfig = async () => {
@@ -178,8 +177,10 @@ const DangerZonesPage = () => {
   // Filtered zones
   const filteredZones = useMemo(() => {
     return zones.filter((zone) => {
-      const matchesSeverity = filterSeverity === "all" || zone.severity === filterSeverity;
-      const matchesSearch = searchQuery === "" ||
+      const matchesSeverity =
+        filterSeverity === "all" || zone.severity === filterSeverity;
+      const matchesSearch =
+        searchQuery === "" ||
         zone.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         zone.description.toLowerCase().includes(searchQuery.toLowerCase());
       return matchesSeverity && matchesSearch;
@@ -189,55 +190,41 @@ const DangerZonesPage = () => {
   // Helper functions
   const getSeverityColor = (severity) => {
     switch (severity) {
-      case "high": return "#FF3B30";
-      case "medium": return "#FF9500";
-      case "low": return "#34C759";
-      default: return "#8E8E93";
+      case "high":
+        return "#FF3B30";
+      case "medium":
+        return "#FF9500";
+      case "low":
+        return "#34C759";
+      default:
+        return "#8E8E93";
     }
   };
 
   const getSeverityIcon = (severity) => {
     switch (severity) {
-      case "high": return <AlertOctagon className="severity-icon" size={16} />;
-      case "medium": return <AlertTriangle className="severity-icon" size={16} />;
-      case "low": return <AlertCircle className="severity-icon" size={16} />;
-      default: return null;
+      case "high":
+        return <AlertOctagon className="severity-icon" size={16} />;
+      case "medium":
+        return <AlertTriangle className="severity-icon" size={16} />;
+      case "low":
+        return <AlertCircle className="severity-icon" size={16} />;
+      default:
+        return null;
     }
   };
 
   // Handle zone creation with Formik
-  const handleCreateZoneSubmit = async (values, { setSubmitting, resetForm }) => {
+  const handleCreateZoneSubmit = async (
+    values,
+    { setSubmitting, resetForm }
+  ) => {
     try {
-<<<<<<< HEAD
-      
-      // Format data for API
-      const zoneData = {
-        name: values.name,
-        severity: values.severity,
-        description: values.description,
-        status: values.status,
-        radius: values.radius,
-        location: {
-          coordinates: [values.location.lng, values.location.lat],
-          type: "Point"
-        }
-      };
-      
-      console.log("Creating zone:", zoneData);
-      
-      const response = await api.post("/dangerArea", zoneData);
-=======
       const response = await api.post("/dangerArea", newZone);
->>>>>>> db09c02aa431e57facf4e4b3014662d809feb8fa
 
       const createdZone = response.data.data;
-      setZones(prev => [...prev, createdZone]);
+      setZones((prev) => [...prev, createdZone]);
       setShowCreateModal(false);
-<<<<<<< HEAD
-      resetForm();
-      setSelectedLocation({ lat: 8.8913, lng: 38.8089 });
-      
-=======
       // Reset new zone form
       setNewZone({
         name: "",
@@ -248,10 +235,13 @@ const DangerZonesPage = () => {
         types: [],
         location: { coordinates: [8.8913, 38.8089] },
       });
->>>>>>> db09c02aa431e57facf4e4b3014662d809feb8fa
     } catch (error) {
       console.error("Error creating danger zone:", error);
-      alert(`Failed to create zone: ${error.response?.data?.message || error.message}`);
+      alert(
+        `Failed to create zone: ${
+          error.response?.data?.message || error.message
+        }`
+      );
     } finally {
       setSubmitting(false);
     }
@@ -259,22 +249,6 @@ const DangerZonesPage = () => {
 
   // Handle zone deletion
   const handleDeleteZone = async () => {
-<<<<<<< HEAD
-    if (!zoneToDelete) return;
-    
-    try {
-      const response = await api.delete(`/dangerArea/${zoneToDelete._id}`);
-      
-      if (response.data.success) {
-        setZones(zones.filter((zone) => zone._id !== zoneToDelete._id));
-      } else {
-        throw new Error(response.data.message || "Delete failed");
-      }
-      
-      setShowDeleteModal(false);
-      setZoneToDelete(null);
-      setSelectedZone(null);
-=======
     // Add async
     if (!zoneToDelete) return;
 
@@ -310,12 +284,13 @@ const DangerZonesPage = () => {
       setIncidents(
         incidents.filter((incident) => incident._id !== incidentToDelete._id)
       );
-      setShowIncidentDeleteModal(false);
+      // setShowIncidentDeleteModal(false);
       setIncidentToDelete(null);
->>>>>>> db09c02aa431e57facf4e4b3014662d809feb8fa
     } catch (error) {
       console.error("Error deleting danger zone:", error);
-      alert("Failed to delete: " + (error.response?.data?.message || error.message));
+      alert(
+        "Failed to delete: " + (error.response?.data?.message || error.message)
+      );
     }
   };
 
@@ -332,9 +307,6 @@ const DangerZonesPage = () => {
   const handleMapClick = (e) => {
     const lat = e.latLng.lat();
     const lng = e.latLng.lng();
-<<<<<<< HEAD
-    setSelectedLocation({ lat, lng });
-=======
 
     const geo = toGeoJSON(lat, lng);
 
@@ -357,7 +329,6 @@ const DangerZonesPage = () => {
       },
     });
     setShowEditModal(true);
->>>>>>> db09c02aa431e57facf4e4b3014662d809feb8fa
   };
 
   // Initialize delete confirmation
@@ -403,16 +374,39 @@ const DangerZonesPage = () => {
             </div>
 
             {/* Severity cards: read config from DB if available, otherwise use defaults */}
-            {(cardConfig?.severities || [
-              { key: "high", label: "High Risk", icon: "AlertOctagon", color: "#FF3B30" },
-              { key: "medium", label: "Medium Risk", icon: "AlertTriangle", color: "#FF9500" },
-              { key: "low", label: "Low Risk", icon: "AlertCircle", color: "#34C759" },
-            ]).map((cfg) => {
+            {(
+              cardConfig?.severities || [
+                {
+                  key: "high",
+                  label: "High Risk",
+                  icon: "AlertOctagon",
+                  color: "#FF3B30",
+                },
+                {
+                  key: "medium",
+                  label: "Medium Risk",
+                  icon: "AlertTriangle",
+                  color: "#FF9500",
+                },
+                {
+                  key: "low",
+                  label: "Low Risk",
+                  icon: "AlertCircle",
+                  color: "#34C759",
+                },
+              ]
+            ).map((cfg) => {
               const IconComp = iconMap[cfg.icon] || AlertCircle;
               const count = severityCounts[cfg.key] || 0;
               return (
                 <div key={cfg.key} className="stat-card">
-                  <div className="stat-icon" style={{ background: (cfg.color || getSeverityColor(cfg.key)) + "20" }}>
+                  <div
+                    className="stat-icon"
+                    style={{
+                      background:
+                        (cfg.color || getSeverityColor(cfg.key)) + "20",
+                    }}
+                  >
                     <IconComp size={20} />
                   </div>
                   <div className="stat-content">
@@ -438,7 +432,10 @@ const DangerZonesPage = () => {
                 <CheckCircle size={20} />
               </div>
               <div className="stat-content">
-                <h3>{incidents?.filter((i) => i.status === "resolved").length || 0}</h3>
+                <h3>
+                  {incidents?.filter((i) => i.status === "resolved").length ||
+                    0}
+                </h3>
                 <p>Resolved</p>
               </div>
             </div>
@@ -453,13 +450,17 @@ const DangerZonesPage = () => {
               </h4>
               <div className="filter-chips">
                 <button
-                  className={`filter-chip ${filterSeverity === "all" ? "active" : ""}`}
+                  className={`filter-chip ${
+                    filterSeverity === "all" ? "active" : ""
+                  }`}
                   onClick={() => setFilterSeverity("all")}
                 >
                   All Zones
                 </button>
                 <button
-                  className={`filter-chip ${filterSeverity === "high" ? "active" : ""}`}
+                  className={`filter-chip ${
+                    filterSeverity === "high" ? "active" : ""
+                  }`}
                   onClick={() => setFilterSeverity("high")}
                   style={{ background: "#FF3B3020", color: "#FF3B30" }}
                 >
@@ -467,7 +468,9 @@ const DangerZonesPage = () => {
                   High Risk
                 </button>
                 <button
-                  className={`filter-chip ${filterSeverity === "medium" ? "active" : ""}`}
+                  className={`filter-chip ${
+                    filterSeverity === "medium" ? "active" : ""
+                  }`}
                   onClick={() => setFilterSeverity("medium")}
                   style={{ background: "#FF950020", color: "#FF9500" }}
                 >
@@ -475,7 +478,9 @@ const DangerZonesPage = () => {
                   Medium Risk
                 </button>
                 <button
-                  className={`filter-chip ${filterSeverity === "low" ? "active" : ""}`}
+                  className={`filter-chip ${
+                    filterSeverity === "low" ? "active" : ""
+                  }`}
                   onClick={() => setFilterSeverity("low")}
                   style={{ background: "#34C75920", color: "#34C759" }}
                 >
@@ -505,7 +510,9 @@ const DangerZonesPage = () => {
               {filteredZones.map((zone) => (
                 <div
                   key={zone._id}
-                  className={`zone-item ${selectedZone?._id === zone._id ? "selected" : ""}`}
+                  className={`zone-item ${
+                    selectedZone?._id === zone._id ? "selected" : ""
+                  }`}
                   onClick={() => {
                     setSelectedZone(zone);
                     setMapCenter({
@@ -531,14 +538,16 @@ const DangerZonesPage = () => {
                     <p className="zone-description">{zone.description}</p>
                     <div className="zone-footer">
                       <span>
-                        <AlertTriangle size={12} /> {zone.incidents || 0} incidents
+                        <AlertTriangle size={12} /> {zone.incidents || 0}{" "}
+                        incidents
                       </span>
                       <span>
                         <Navigation size={12} /> {zone.radius}m radius
                       </span>
                       <span>
                         <MapPin size={12} />
-                        {zone?.location?.coordinates[1]?.toFixed(4) || "N/A"},{" "}
+                        {zone?.location?.coordinates[1]?.toFixed(4) ||
+                          "N/A"},{" "}
                         {zone?.location?.coordinates[0]?.toFixed(4) || "N/A"}
                       </span>
                     </div>
@@ -708,9 +717,13 @@ const DangerZonesPage = () => {
                   type="text"
                   name="name"
                   placeholder="Enter zone name"
-                  className={errors.name && touched.name ? 'error-field' : ''}
+                  className={errors.name && touched.name ? "error-field" : ""}
                 />
-                <ErrorMessage name="name" component="div" className="error-message" />
+                <ErrorMessage
+                  name="name"
+                  component="div"
+                  className="error-message"
+                />
               </div>
 
               {/* Severity Level */}
@@ -721,15 +734,19 @@ const DangerZonesPage = () => {
                     <button
                       key={level}
                       type="button"
-                      className={`severity-option ${values.severity === level ? "selected" : ""}`}
+                      className={`severity-option ${
+                        values.severity === level ? "selected" : ""
+                      }`}
                       onClick={() => setFieldValue("severity", level)}
                       style={{
-                        background: values.severity === level
-                          ? getSeverityColor(level)
-                          : getSeverityColor(level) + "20",
-                        color: values.severity === level
-                          ? "white"
-                          : getSeverityColor(level),
+                        background:
+                          values.severity === level
+                            ? getSeverityColor(level)
+                            : getSeverityColor(level) + "20",
+                        color:
+                          values.severity === level
+                            ? "white"
+                            : getSeverityColor(level),
                       }}
                     >
                       {level === "high" ? (
@@ -743,7 +760,11 @@ const DangerZonesPage = () => {
                     </button>
                   ))}
                 </div>
-                <ErrorMessage name="severity" component="div" className="error-message" />
+                <ErrorMessage
+                  name="severity"
+                  component="div"
+                  className="error-message"
+                />
               </div>
 
               {/* Status */}
@@ -758,7 +779,11 @@ const DangerZonesPage = () => {
                     <option value="inactive">Inactive</option>
                     <option value="under_review">Under Review</option>
                   </Field>
-                  <ErrorMessage name="status" component="div" className="error-message" />
+                  <ErrorMessage
+                    name="status"
+                    component="div"
+                    className="error-message"
+                  />
                 </div>
               </div>
 
@@ -773,9 +798,15 @@ const DangerZonesPage = () => {
                   name="radius"
                   min="10"
                   max="1000"
-                  className={errors.radius && touched.radius ? 'error-field' : ''}
+                  className={
+                    errors.radius && touched.radius ? "error-field" : ""
+                  }
                 />
-                <ErrorMessage name="radius" component="div" className="error-message" />
+                <ErrorMessage
+                  name="radius"
+                  component="div"
+                  className="error-message"
+                />
               </div>
 
               {/* Location */}
@@ -801,7 +832,11 @@ const DangerZonesPage = () => {
                 <small className="hint">
                   Click the button to select location on map
                 </small>
-                <ErrorMessage name="location" component="div" className="error-message" />
+                <ErrorMessage
+                  name="location"
+                  component="div"
+                  className="error-message"
+                />
               </div>
 
               {/* Description */}
@@ -815,9 +850,17 @@ const DangerZonesPage = () => {
                   name="description"
                   placeholder="Describe why this area is dangerous..."
                   rows="4"
-                  className={errors.description && touched.description ? 'error-field' : ''}
+                  className={
+                    errors.description && touched.description
+                      ? "error-field"
+                      : ""
+                  }
                 />
-                <ErrorMessage name="description" component="div" className="error-message" />
+                <ErrorMessage
+                  name="description"
+                  component="div"
+                  className="error-message"
+                />
               </div>
 
               <div className="modal-actions">
@@ -829,8 +872,8 @@ const DangerZonesPage = () => {
                   <X size={16} />
                   Cancel
                 </button>
-                <button 
-                  type="submit" 
+                <button
+                  type="submit"
                   className="btn btn-primary"
                   disabled={isSubmitting}
                 >
@@ -954,47 +997,6 @@ const DangerZonesPage = () => {
               <button className="btn btn-danger" onClick={handleDeleteZone}>
                 <Trash2 size={16} />
                 Delete Zone
-              </button>
-            </div>
-          </div>
-        )}
-      </Modal>
-
-      {/* DELETE INCIDENT CONFIRMATION MODAL */}
-      <Modal
-        isOpen={showIncidentDeleteModal}
-        onClose={() => {
-          setShowIncidentDeleteModal(false);
-          setIncidentToDelete(null);
-        }}
-        title="Confirm Delete"
-        size="small"
-      >
-        {incidentToDelete && (
-          <div className="delete-confirmation">
-            <div className="warning-icon">
-              <AlertTriangle size={48} />
-            </div>
-            <h4>Delete Incident Report</h4>
-            <p>
-              Are you sure you want to delete{" "}
-              <strong>{incidentToDelete.title}</strong>?
-            </p>
-            <p className="warning-text">This action cannot be undone.</p>
-            <div className="modal-actions">
-              <button
-                className="btn btn-secondary"
-                onClick={() => {
-                  setShowIncidentDeleteModal(false);
-                  setIncidentToDelete(null);
-                }}
-              >
-                <X size={16} />
-                Cancel
-              </button>
-              <button className="btn btn-danger" onClick={handleDeleteIncident}>
-                <Trash2 size={16} />
-                Delete Incident
               </button>
             </div>
           </div>
