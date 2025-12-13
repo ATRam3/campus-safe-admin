@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import api from "../services/api";
 import "../css/Announcements.css";
+import NotificationForm from "../component/form/NotificationForm";
 
 const Announcements = () => {
   // State management
@@ -13,11 +14,6 @@ const Announcements = () => {
 
   // Form state - Simplified
   const [showNewAnnouncement, setShowNewAnnouncement] = useState(false);
-  const [newAnnouncement, setNewAnnouncement] = useState({
-    title: "",
-    content: "",
-    type: "",
-  });
 
   // Delete confirmation modal
   const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -89,41 +85,20 @@ const Announcements = () => {
     setTimeout(() => setSuccessMessage(null), 5000);
   };
 
-  // Validate form
-  const validateForm = () => {
-    const errors = {};
-
-    if (!newAnnouncement.title.trim()) {
-      errors.title = "Title is required";
-    }
-
-    if (!newAnnouncement.content.trim()) {
-      errors.content = "Content is required";
-    }
-
-    return errors;
-  };
-
   // Handle sending new announcement
-  const handleSendAnnouncement = async () => {
-    // Clear previous errors
+  const handleSendAnnouncement = async (formValues) => {
     setFormErrors({});
 
-    // Validate form
-    const errors = validateForm();
-    if (Object.keys(errors).length > 0) {
-      setFormErrors(errors);
-      showError("Please fix the form errors");
-      return;
-    }
-
-    // Build payload - Always sent to all users
     const payload = {
-      title: newAnnouncement.title.trim(),
-      content: newAnnouncement.content.trim(),
-      targetAudience: "all", // Fixed to all users
-      type: newAnnouncement.type,
-      status: "sent", // Always send immediately
+      title: formValues.title.trim(),
+      content: formValues.content.trim(),
+      targetAudience: formValues.targetAudience || "all",
+      type: formValues.type,
+      status: formValues.status,
+      ...(formValues.type === "announcement" &&
+        formValues.scheduleMode === "schedule" && {
+          scheduledTime: formValues.scheduledTime,
+        }),
     };
 
     console.log("Sending payload:", payload);
@@ -131,29 +106,28 @@ const Announcements = () => {
     try {
       setLoading(true);
       const response = await api.post("/notification/alerts", payload);
-      console.log("Response:", response.data);
 
-      // Handle different response structures
       const newAnnouncementData = response.data.data || response.data;
-
-      if (!newAnnouncementData || !newAnnouncementData._id) {
+      console.log("new Announcement response:", response.data);
+      if (!newAnnouncementData?._id) {
         throw new Error("Invalid response from server");
       }
 
-      // Add to beginning of announcements array (most recent first)
       setAnnouncements((prev) => [newAnnouncementData, ...prev]);
       setSelectedAnnouncement(newAnnouncementData);
 
-      // Reset form and close modal
       resetForm();
-      showSuccess("✅ Announcement sent successfully to all users!");
+      showSuccess(
+        formValues.scheduleMode === "schedule"
+          ? "⏰ Announcement scheduled successfully!"
+          : "✅ Notification sent successfully!"
+      );
     } catch (err) {
-      console.error("Error sending announcement:", err);
       const errorMessage =
         err.response?.data?.message ||
         err.response?.data?.error ||
         err.message ||
-        "Failed to send announcement. Please try again.";
+        "Failed to send notification.";
       showError(`❌ ${errorMessage}`);
     } finally {
       setLoading(false);
@@ -172,9 +146,7 @@ const Announcements = () => {
 
     try {
       setLoading(true);
-      await api.delete(
-        `/notification/announcements/${announcementToDelete._id}`
-      );
+      await api.delete(`/notification/alerts/${announcementToDelete._id}`);
 
       // Remove from state
       const updatedAnnouncements = announcements.filter(
@@ -464,7 +436,7 @@ const Announcements = () => {
                   onClick={() => openDeleteModal(selectedAnnouncement)}
                   disabled={loading}
                 >
-                  🗑️ Delete
+                  🗑 Delete
                 </button>
               </div>
             </div>
@@ -480,157 +452,27 @@ const Announcements = () => {
 
       {/* Create New Announcement Modal */}
       {showNewAnnouncement && (
-        <div className="modal-overlay" onClick={resetForm}>
+        <div
+          className="modal-overlay"
+          onClick={() => setShowNewAnnouncement(false)}
+        >
           <div className="modal-container" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
-              <h3>Create New Announcement</h3>
-              <button className="modal-close" onClick={resetForm}>
+              <h3>Create Notification</h3>
+              <button
+                className="modal-close"
+                onClick={() => setShowNewAnnouncement(false)}
+              >
                 ×
               </button>
             </div>
+
             <div className="modal-content">
-              <div className="announcement-form">
-                {/* Type Selection */}
-                <div className="form-group">
-                  <label>Type *</label>
-                  <div className="type-selection">
-                    <label
-                      className={`type-option ${
-                        newAnnouncement.type === "announcement" ? "active" : ""
-                      }`}
-                    >
-                      <input
-                        type="radio"
-                        name="type"
-                        value="announcement"
-                        checked={newAnnouncement.type === "announcement"}
-                        onChange={(e) =>
-                          setNewAnnouncement({
-                            ...newAnnouncement,
-                            type: e.target.value,
-                          })
-                        }
-                      />
-                      <div className="option-content">
-                        <span className="option-icon">📢</span>
-                        <span className="option-text">Announcement</span>
-                      </div>
-                    </label>
-                    <label
-                      className={`type-option ${
-                        newAnnouncement.type === "alert" ? "active" : ""
-                      }`}
-                    >
-                      <input
-                        type="radio"
-                        name="type"
-                        value="alert"
-                        checked={newAnnouncement.type === "alert"}
-                        onChange={(e) =>
-                          setNewAnnouncement({
-                            ...newAnnouncement,
-                            type: e.target.value,
-                          })
-                        }
-                      />
-                      <div className="option-content">
-                        <span className="option-icon">⚠️</span>
-                        <span className="option-text">Alert</span>
-                      </div>
-                    </label>
-                  </div>
-                </div>
-
-                {/* Title Field */}
-                <div className="form-group">
-                  <label>
-                    Title *
-                    {formErrors.title && (
-                      <span className="error-text"> - {formErrors.title}</span>
-                    )}
-                  </label>
-                  <input
-                    type="text"
-                    placeholder={`Enter ${newAnnouncement.type} title`}
-                    value={newAnnouncement.title}
-                    onChange={(e) => {
-                      setNewAnnouncement({
-                        ...newAnnouncement,
-                        title: e.target.value,
-                      });
-                      if (formErrors.title) {
-                        setFormErrors((prev) => ({
-                          ...prev,
-                          title: undefined,
-                        }));
-                      }
-                    }}
-                    className={formErrors.title ? "error" : ""}
-                    disabled={loading}
-                  />
-                </div>
-
-                {/* Content Field */}
-                <div className="form-group">
-                  <label>
-                    Message *
-                    {formErrors.content && (
-                      <span className="error-text">
-                        {" "}
-                        - {formErrors.content}
-                      </span>
-                    )}
-                  </label>
-                  <textarea
-                    value={newAnnouncement.content}
-                    onChange={(e) => {
-                      setNewAnnouncement({
-                        ...newAnnouncement,
-                        content: e.target.value,
-                      });
-                      if (formErrors.content) {
-                        setFormErrors((prev) => ({
-                          ...prev,
-                          content: undefined,
-                        }));
-                      }
-                    }}
-                    placeholder={`Write your ${newAnnouncement.type} message here...`}
-                    rows="5"
-                    className={formErrors.content ? "error" : ""}
-                    disabled={loading}
-                  />
-                </div>
-
-                {/* Audience Info */}
-                <div className="form-info">
-                  <div className="info-box">
-                    <span className="info-icon">ℹ️</span>
-                    <span className="info-text">
-                      This announcement will be sent to{" "}
-                      <strong>all users</strong> immediately.
-                    </span>
-                  </div>
-                </div>
-
-                {/* Form Actions */}
-                <div className="modal-actions">
-                  <button
-                    className="btn btn-secondary"
-                    onClick={resetForm}
-                    disabled={loading}
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    className="btn btn-primary"
-                    onClick={handleSendAnnouncement}
-                    disabled={loading}
-                  >
-                    {loading ? "Sending..." : "📤 Send to All Users"}
-                  </button>
-                </div>
-              </div>
+              <NotificationForm
+                onSubmit={handleSendAnnouncement}
+                loading={loading}
+                onCancel={() => setShowNewAnnouncement(false)}
+              />
             </div>
           </div>
         </div>
