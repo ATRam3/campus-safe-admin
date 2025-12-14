@@ -20,6 +20,16 @@ const Login = () => {
         // Store token in localStorage
         localStorage.setItem("token", response.data.data.token);
         localStorage.setItem("refreshToken", response.data.data.refreshToken);
+        //store user info
+        localStorage.setItem(
+          "user",
+          JSON.stringify({
+            id: response.data.data.user._id,
+            fullName: response.data.data.user.fullName,
+            email: response.data.data.user.email,
+            role: response.data.data.user.role,
+          })
+        );
         // Redirect to dashboard
         navigate("/dashboard");
       }
