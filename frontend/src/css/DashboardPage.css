@@ -495,7 +495,39 @@
     text-align: center;
   }
   
+  .view-all-btn {
+    background: #667eea;
+    color: white;
+    border: none;
+    padding: 8px 20px;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+  
+  .view-all-btn:hover {
+    background: #5a67d8;
+    transform: translateY(-1px);
+  }
 
+  .view-all {
+    background: none;
+    border: none;
+    color: #4299e1;
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+  }
+  
+  .view-all:hover {
+    text-decoration: underline;
+    color:#fff;
+  }
   
   @keyframes spin {
     to {
