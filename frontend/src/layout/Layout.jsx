@@ -1,10 +1,15 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Link, useLocation, Outlet } from "react-router-dom";
 import "../css/Layout.css";
 import { useNavigate } from "react-router-dom"
+import Modal from "../component/shared/Modal"
+import ProfileSection from "../component/settings/ProfileSection";
+import api from "../services/api"
 
 const Layout = () => {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [settingsModalOpen, setSettingsModalOpen] = useState(false);
+  const [adminData, setAdminData] = useState(null);
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -15,7 +20,6 @@ const Layout = () => {
     { path: "/incidents", icon: "📋", label: "Incident Reports" },
     { path: "/announcements", icon: "📢", label: "Announcements" },
     { path: "/users", icon: "👥", label: "User Management" },
-    { path: "/settings", icon: "⚙️", label: "Settings" },
   ];
 
   const isActive = (path) => location.pathname === path;
@@ -24,6 +28,27 @@ const Layout = () => {
   const currentPage = menuItems.find((item) => isActive(item.path));
   const pageTitle = currentPage ? currentPage.label : "";
 
+  //Fetch admin data
+  useEffect(() => {
+    const fetchAdminData = async () => {
+      try {
+        const user = JSON.parse(localStorage.getItem("user"));
+        if (!user) {
+          handleLogout();
+          throw new Error("User not found");
+        }
+
+        const response = await api.get("/profile", user);
+        setAdminData(response.data.data || []);
+        console.log("Fetched data:", response.data.data);
+      } catch (error) {
+        console.error("Error fetching profile data:", error);
+      }
+    };
+
+    fetchAdminData();
+  }, [settingsModalOpen]);
+
   const handleLogout = () => {
     navigate("/login", { replace: true });
 
@@ -31,6 +56,7 @@ const Layout = () => {
     setTimeout(() => {
       localStorage.removeItem("token");
       localStorage.removeItem("refreshToken");
+      localStorage.removeItem("user");
     }, 0);
   };
 
@@ -77,7 +103,19 @@ const Layout = () => {
               )}
             </Link>
           ))}
+
+          {/* Settings button that opens modal */}
+          <button
+            className="menu-item"
+            onClick={() => setSettingsModalOpen(true)}
+          >
+            <span className="menu-icon">⚙️</span>
+            {!sidebarCollapsed && (
+              <span className="menu-label">Settings</span>
+            )}
+          </button>
         </nav>
+
 
         {/* User Profile */}
         {!sidebarCollapsed && (
@@ -137,7 +175,7 @@ const Layout = () => {
                 </div>
 
                 <div className="user-menu">
-                  <button onClick={() => navigate("/settings")}>Settings</button>
+                  <button onClick={() => setSettingsModalOpen(true)}>Settings</button>
                   <button className="logout-btn" onClick={handleLogout}>Logout</button>
                 </div>
               </div>
@@ -151,6 +189,18 @@ const Layout = () => {
           <Outlet />
         </div>
       </div>
+
+      {/* Settings Modal */}
+      <Modal
+        isOpen={settingsModalOpen}
+        onClose={() => setSettingsModalOpen(false)}
+        title="⚙️ Settings"
+        size="xlarge"
+        children={<ProfileSection
+          adminData={adminData}
+          setAdminData={setAdminData}
+        />}
+      />
     </div>
   );
 };

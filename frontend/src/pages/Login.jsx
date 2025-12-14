@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import "../css/Login.css"; // import the CSS file
+import "../css/Login.css";
 import api from "../services/api";
 import { useNavigate } from "react-router-dom";
 
@@ -20,6 +20,7 @@ const Login = () => {
         // Store token in localStorage
         localStorage.setItem("token", response.data.data.token);
         localStorage.setItem("refreshToken", response.data.data.refreshToken);
+        localStorage.setItem("user", JSON.stringify(response.data.data.user));
         // Redirect to dashboard
         navigate("/dashboard");
       }
