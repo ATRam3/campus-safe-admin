@@ -1,10 +1,12 @@
 import React, { useState } from "react";
 import { Link, useLocation, Outlet } from "react-router-dom";
 import "../css/Layout.css";
+import { useNavigate } from "react-router-dom"
 
 const Layout = () => {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const location = useLocation();
+  const navigate = useNavigate();
 
   const menuItems = [
     { path: "/dashboard", icon: "📊", label: "Dashboard" },
@@ -21,6 +23,17 @@ const Layout = () => {
   // Detect title based on active route
   const currentPage = menuItems.find((item) => isActive(item.path));
   const pageTitle = currentPage ? currentPage.label : "";
+
+  const handleLogout = () => {
+    navigate("/login", { replace: true });
+
+    // clear after navigation
+    setTimeout(() => {
+      localStorage.removeItem("token");
+      localStorage.removeItem("refreshToken");
+    }, 0);
+  };
+
 
   return (
     <div className="admin-layout">
@@ -82,7 +95,7 @@ const Layout = () => {
                 <p>Administrator</p>
               </div>
 
-              <button className="logout-btn" title="Logout">
+              <button className="logout-btn" title="Logout" onClick={handleLogout}>
                 ↩️
               </button>
             </div>
@@ -110,17 +123,25 @@ const Layout = () => {
               <button className="notification-btn">
                 🔔 <span className="notification-count">3</span>
               </button>
-              <button className="quick-action-btn">🚨 Emergency</button>
+              {/* <button className="quick-action-btn">🚨 Emergency</button> */}
 
               <div className="user-dropdown">
-                <img
-                  src="https://api.dicebear.com/7.x/avataaars/svg?seed=Admin"
-                  className="header-avatar"
-                  alt="Admin"
-                />
-                <span className="username">Admin User</span>
-                <span className="dropdown-arrow">▼</span>
+                <div className="user-trigger">
+                  <img
+                    src="https://api.dicebear.com/7.x/avataaars/svg?seed=Admin"
+                    className="header-avatar"
+                    alt="Admin"
+                  />
+                  <span className="username">Admin User</span>
+                  <span className="dropdown-arrow">▼</span>
+                </div>
+
+                <div className="user-menu">
+                  <button onClick={() => navigate("/settings")}>Settings</button>
+                  <button className="logout-btn" onClick={handleLogout}>Logout</button>
+                </div>
               </div>
+
             </div>
           </div>
         </header>
