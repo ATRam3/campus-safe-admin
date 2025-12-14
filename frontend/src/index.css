@@ -88,6 +88,65 @@
   border: 1px solid #E0E0E0;
 }
 
+/* Base notification */
+.notify {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 500;
+  margin-bottom: 14px;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.08);
+  animation: slideFadeIn 0.3s ease;
+  position: fixed;
+  top: 50px;
+  left: 60%;
+  transform: translate(-50%);
+  z-index: 1000;
+  width: fit-content;
+}
+
+/* Icon */
+.notify-icon {
+  font-size: 18px;
+  line-height: 1;
+}
+
+/* Success */
+.notify-success {
+  background: #ecfdf5;
+  color: #065f46;
+  border: 1px solid #a7f3d0;
+}
+
+/* Error */
+.notify-error {
+  background: #fef2f2;
+  color: #7f1d1d;
+  border: 1px solid #fecaca;
+}
+
+/* Close button */
+.notify-close {
+  margin-left: auto;
+  background: transparent;
+  border: none;
+  font-size: 20px;
+  font-weight: 600;
+  cursor: pointer;
+  color: inherit;
+  opacity: 0.7;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.notify-close:hover {
+  opacity: 1;
+  transform: scale(1.1);
+  color: white;
+}
+
 /* Responsive Adjustments */
 @media (max-width: 768px) {
   .content-grid {

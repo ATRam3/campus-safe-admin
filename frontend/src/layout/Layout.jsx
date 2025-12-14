@@ -13,7 +13,6 @@ const Layout = () => {
     { path: "/incidents", icon: "📋", label: "Incident Reports" },
     { path: "/announcements", icon: "📢", label: "Announcements" },
     { path: "/users", icon: "👥", label: "User Management" },
-    { path: "/analytics", icon: "📈", label: "Analytics" },
     { path: "/settings", icon: "⚙️", label: "Settings" },
   ];
 
