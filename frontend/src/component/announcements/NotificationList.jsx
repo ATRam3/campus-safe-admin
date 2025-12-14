@@ -1,25 +1,26 @@
 import React from "react";
 
-const NotificationList = ({ 
-  notifications, 
-  loading, 
-  searchQuery, 
+const NotificationList = ({
+  notifications,
+  loading,
+  searchQuery,
   filterStatus,
   selectedNotification,
-  onSearchChange, 
-  onFilterChange, 
+  onSearchChange,
+  onFilterChange,
   onSelectNotification,
-  onDeleteNotification
+  onDeleteNotification,
 }) => {
-  
   const getStatusInfo = (status) => {
-    switch (status) {
-      case "sent":
-        return { color: "#34C759", text: "Sent", badge: "📤" };
-      case "draft":
-        return { color: "#8E8E93", text: "Draft", badge: "📝" };
+    switch (status?.toLowerCase()) {
+      case "low":
+        return { color: "#34C759", text: "Low", badge: "📤" };
+      case "medium":
+        return { color: "#be7e33ff", text: "Medium", badge: "" };
+      case "high":
+        return { color: "#e03d3dff", text: "High", badge: "" };
       default:
-        return { color: "#8E8E93", text: "Unknown", badge: "📄" };
+        return { color: "#8E8E93", text: status || "Unknown", badge: "📄" };
     }
   };
 
@@ -93,10 +94,11 @@ const NotificationList = ({
             return (
               <div
                 key={notification._id}
-                className={`announcement-item ${selectedNotification?._id === notification._id
-                  ? "selected"
-                  : ""
-                  }`}
+                className={`announcement-item ${
+                  selectedNotification?._id === notification._id
+                    ? "selected"
+                    : ""
+                }`}
                 onClick={() => onSelectNotification(notification)}
               >
                 <div className="announcement-header">
@@ -123,11 +125,11 @@ const NotificationList = ({
                   {notification.content.length > 80 ? "..." : ""}
                 </p>
                 <div className="announcement-footer">
-                  <span className="audience-badge">👥 All Users</span>
+                  <span className="audience-badge">
+                    {notification.targetAudience || "All users"}
+                  </span>
                   <span className="date-info">
-                    {formatDate(
-                      notification.createdAt || notification.time
-                    )}
+                    {formatDate(notification.createdAt || notification.time)}
                   </span>
                 </div>
               </div>

@@ -36,17 +36,38 @@ const Announcements = () => {
       try {
         const [alertsResponse, announcementsResponse] = await Promise.all([
           api.get("/notification/alerts"),
-          api.get("/notification/announcements")
+          api.get("/notification/announcements"),
         ]);
 
-        const alertsData = alertsResponse.data.data || alertsResponse.data || [];
-        const announcementsData = announcementsResponse.data.data || announcementsResponse.data || [];
+        console.log(
+          "Alerts response:",
+          alertsResponse.data.data[0].targetAudience
+        );
+
+        console.log(
+          "Alert Status response:",
+          announcementsResponse.data.data[0].status
+        );
+        console.log("alert id : ", announcementsResponse.data.data[0]._id);
+
+        console.log("Announcements response:", announcementsResponse.data);
+
+        const alertsData =
+          alertsResponse.data.data || alertsResponse.data || [];
+        const announcementsData =
+          announcementsResponse.data.data || announcementsResponse.data || [];
 
         setAlerts(alertsData);
         setAnnouncements(announcementsData);
 
         const combined = [...alertsData, ...announcementsData];
-        combined.sort((a, b) => (a.type === b.type ? new Date(b.createdAt) - new Date(a.createdAt) : a.type === "alert" ? -1 : 1));
+        combined.sort((a, b) =>
+          a.type === b.type
+            ? new Date(b.createdAt) - new Date(a.createdAt)
+            : a.type === "alert"
+            ? -1
+            : 1
+        );
         setNotifications(combined);
 
         if (combined.length > 0 && !selectedNotification) {
@@ -98,11 +119,11 @@ const Announcements = () => {
       status: formValues.status,
       ...(formValues.type === "announcement" &&
         formValues.scheduleMode === "schedule" && {
-        scheduledTime: formValues.scheduledTime,
-      }),
+          scheduledTime: formValues.scheduledTime,
+        }),
     };
 
-    console.log("Sending payload:", payload);
+    console.log("SENDING payload:", JSON.stringify(payload, null, 2));
 
     try {
       setLoading(true);
@@ -110,6 +131,10 @@ const Announcements = () => {
 
       const newAnnouncementData = response.data.data || response.data;
       console.log("new Announcement response:", response.data);
+      console.log(
+        "targetAudience in response:",
+        newAnnouncementData.targetAudience
+      );
       if (!newAnnouncementData?._id) {
         throw new Error("Invalid response from server");
       }
@@ -148,7 +173,7 @@ const Announcements = () => {
 
     try {
       setLoading(true);
-      await api.delete(`/notification/${notificationToDelete._id}`);
+      await api.delete(`/notification/alerts/${notificationToDelete._id}`);
 
       // Remove from state
       const updatedNotifications = notifications.filter(
@@ -206,7 +231,12 @@ const Announcements = () => {
         <div className="notify notify-success">
           <span className="notify-icon">✅</span>
           <span>{successMessage}</span>
-          <button className="notify-close" onClick={() => setSuccessMessage(null)}>×</button>
+          <button
+            className="notify-close"
+            onClick={() => setSuccessMessage(null)}
+          >
+            ×
+          </button>
         </div>
       )}
 
@@ -215,7 +245,9 @@ const Announcements = () => {
         <div className="notify notify-error">
           <span className="notify-icon">⚠️</span>
           <span>{error}</span>
-          <button className="notify-close" onClick={() => setError(null)}>×</button>
+          <button className="notify-close" onClick={() => setError(null)}>
+            ×
+          </button>
         </div>
       )}
 

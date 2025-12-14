@@ -1,18 +1,18 @@
 import React from "react";
 
 const NotificationDetails = ({ notification, loading, onDelete }) => {
-  
   const getStatusInfo = (status) => {
-    switch (status) {
-      case "sent":
-        return { color: "#34C759", text: "Sent", badge: "📤" };
-      case "draft":
-        return { color: "#8E8E93", text: "Draft", badge: "📝" };
+    switch (status?.toLowerCase()) {
+      case "low":
+        return { color: "#34C759", text: "Low", badge: "📤" };
+      case "medium":
+        return { color: "#be7e33ff", text: "Medium", badge: "" };
+      case "high":
+        return { color: "#e03d3dff", text: "High", badge: "" };
       default:
-        return { color: "#8E8E93", text: "Unknown", badge: "📄" };
+        return { color: "#8E8E93", text: status || "Unknown", badge: "📄" };
     }
   };
-
   const formatDate = (dateString) => {
     if (!dateString) return "Just now";
     try {
@@ -61,17 +61,11 @@ const NotificationDetails = ({ notification, loading, onDelete }) => {
           <div className="title-section">
             <h2>{notification.title}</h2>
             <div className="meta-info">
-              <span
-                className={`type-badge large ${notification.type}`}
-              >
-                {notification.type === "alert"
-                  ? "⚠️ Alert"
-                  : "📢 Announcement"}
+              <span className={`type-badge large ${notification.type}`}>
+                {notification.type === "alert" ? "⚠️ Alert" : "📢 Announcement"}
               </span>
               <span className="date-info">
-                {formatDate(
-                  notification.createdAt || notification.time
-                )}
+                {formatDate(notification.createdAt || notification.time)}
               </span>
             </div>
           </div>
@@ -87,18 +81,18 @@ const NotificationDetails = ({ notification, loading, onDelete }) => {
                 {statusInfo.text.toUpperCase()}
               </span>
             </div>
-            <div className="audience-display">👥 Sent to: All Users</div>
+            <div className="audience-display">
+              {notification.targetAudience || "All Users"}
+            </div>
           </div>
         </div>
 
         <div className="content-section">
           <h3>Message Content</h3>
           <div className="message-content">
-            {notification.content
-              .split("\n")
-              .map((paragraph, index) => (
-                <p key={index}>{paragraph || <br />}</p>
-              ))}
+            {notification.content.split("\n").map((paragraph, index) => (
+              <p key={index}>{paragraph || <br />}</p>
+            ))}
           </div>
         </div>
 

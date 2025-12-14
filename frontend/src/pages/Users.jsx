@@ -10,6 +10,13 @@ const Users = () => {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [showUserDetail, setShowUserDetail] = useState(false);
+
+  const handleDetailOpen = (user) => {
+    console.log("Modal opended for user:", user);
+    setSelectedUser(user);
+    setShowUserDetail(true);
+  };
 
   // Fetch users from API
   useEffect(() => {
@@ -274,7 +281,11 @@ const Users = () => {
             </div>
 
             {filteredUsers.map((user) => (
-              <div key={user._id} className="table-row">
+              <div
+                key={user._id}
+                className="table-row"
+                onClick={() => handleDetailOpen(user)}
+              >
                 <div className="col col-user">
                   <div className="user-info">
                     <div className="avatar-placeholder">
@@ -323,7 +334,7 @@ const Users = () => {
                   <div className="action-buttons-cell">
                     <button
                       className="action-btn view-btn"
-                      onClick={() => setSelectedUser(user)}
+                      onClick={() => handleDetailOpen(user)}
                       title="View Details"
                     >
                       👁️
