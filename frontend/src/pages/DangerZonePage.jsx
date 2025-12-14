@@ -9,11 +9,13 @@ import DangerZoneMap from "../component/dangerZones/DangerZoneMap";
 import CreateZoneModal from "../component/dangerZones/CreateZoneModal";
 import MapSelectionModal from "../component/dangerZones/MapSelectionModal";
 import DeleteConfirmationModal from "../component/shared/DeleteConfirmationModal";
+import LocationImg from "../assets/location.png";
 
 // Import only needed icons
 import {
   AlertOctagon,
   AlertTriangle,
+  TriangleAlert,
   AlertCircle,
 } from "lucide-react";
 
@@ -23,7 +25,7 @@ const DangerZonePage = () => {
   const [filterSeverity, setFilterSeverity] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedZone, setSelectedZone] = useState(null);
-  const [mapZoom, setMapZoom] = useState(16)
+  const [mapZoom, setMapZoom] = useState(16);
   const [mapCenter, setMapCenter] = useState({ lat: 8.8913, lng: 38.8089 });
   const [loading, setLoading] = useState(false);
 
@@ -73,9 +75,12 @@ const DangerZonePage = () => {
         filterSeverity === "all" || zone.severity === filterSeverity;
       const matchesSearch =
         searchQuery === "" ||
-        (zone.zoneName && zone.zoneName.toLowerCase().includes(searchQuery.toLowerCase())) ||
-        (zone.name && zone.name.toLowerCase().includes(searchQuery.toLowerCase())) ||
-        (zone.description && zone.description.toLowerCase().includes(searchQuery.toLowerCase()));
+        (zone.zoneName &&
+          zone.zoneName.toLowerCase().includes(searchQuery.toLowerCase())) ||
+        (zone.name &&
+          zone.name.toLowerCase().includes(searchQuery.toLowerCase())) ||
+        (zone.description &&
+          zone.description.toLowerCase().includes(searchQuery.toLowerCase()));
       return matchesSeverity && matchesSearch;
     });
   }, [zones, filterSeverity, searchQuery]);
@@ -91,6 +96,19 @@ const DangerZonePage = () => {
         return "#34C759";
       default:
         return "#8E8E93";
+    }
+  };
+
+  const getMarkerIcon = (severity) => {
+    switch (severity) {
+      case "high":
+        return <img src={LocationImg} alt="High Severity" />;
+      case "medium":
+        return <img src={LocationImg} alt="Medium Severity" />;
+      case "low":
+        return <img src={LocationImg} alt="Low Severity" />;
+      default:
+        return "";
     }
   };
 
@@ -115,7 +133,7 @@ const DangerZonePage = () => {
     if (Array.isArray(coords)) {
       return {
         lat: coords[1] || 8.8913, // lat is second in GeoJSON
-        lng: coords[0] || 38.8089 // lng is first in GeoJSON
+        lng: coords[0] || 38.8089, // lng is first in GeoJSON
       };
     }
 
@@ -129,7 +147,10 @@ const DangerZonePage = () => {
   };
 
   // Handle zone creation
-  const handleCreateZoneSubmit = async (formValues, { setSubmitting, resetForm }) => {
+  const handleCreateZoneSubmit = async (
+    formValues,
+    { setSubmitting, resetForm }
+  ) => {
     try {
       setLoading(true);
 
@@ -141,8 +162,8 @@ const DangerZonePage = () => {
         status: formValues.status,
         location: {
           type: "Point",
-          coordinates: [formValues.location.lng, formValues.location.lat] // GeoJSON: [lng, lat]
-        }
+          coordinates: [formValues.location.lng, formValues.location.lat], // GeoJSON: [lng, lat]
+        },
       };
 
       console.log("Creating zone with payload:", payload);
@@ -154,7 +175,7 @@ const DangerZonePage = () => {
       }
 
       const newZone = response.data.data;
-      setZones(prev => [newZone, ...prev]);
+      setZones((prev) => [newZone, ...prev]);
       setSelectedZone(newZone);
       setShowCreateModal(false);
 
@@ -165,7 +186,10 @@ const DangerZonePage = () => {
       showSuccess("Danger zone created successfully!");
     } catch (error) {
       console.error("Error creating danger zone:", error);
-      const errorMsg = error.response?.data?.message || error.message || "Failed to create zone";
+      const errorMsg =
+        error.response?.data?.message ||
+        error.message ||
+        "Failed to create zone";
       setError(`Failed to create zone: ${errorMsg}`);
     } finally {
       setLoading(false);
@@ -182,7 +206,9 @@ const DangerZonePage = () => {
       const response = await api.delete(`/dangerArea/${zoneToDelete._id}`);
 
       if (response.data.success) {
-        setZones(prev => prev.filter(zone => zone._id !== zoneToDelete._id));
+        setZones((prev) =>
+          prev.filter((zone) => zone._id !== zoneToDelete._id)
+        );
         showSuccess("Danger zone deleted successfully!");
 
         if (selectedZone?._id === zoneToDelete._id) {
@@ -193,7 +219,10 @@ const DangerZonePage = () => {
       }
     } catch (error) {
       console.error("Error deleting danger zone:", error);
-      const errorMsg = error.response?.data?.message || error.message || "Failed to delete zone";
+      const errorMsg =
+        error.response?.data?.message ||
+        error.message ||
+        "Failed to delete zone";
       setError(`Failed to delete zone: ${errorMsg}`);
     } finally {
       setLoading(false);
@@ -241,7 +270,12 @@ const DangerZonePage = () => {
         <div className="notify notify-success">
           <span className="notify-icon">✅</span>
           <span>{successMessage}</span>
-          <button className="notify-close" onClick={() => setSuccessMessage(null)}>×</button>
+          <button
+            className="notify-close"
+            onClick={() => setSuccessMessage(null)}
+          >
+            ×
+          </button>
         </div>
       )}
 
@@ -250,25 +284,28 @@ const DangerZonePage = () => {
         <div className="notify notify-error">
           <span className="notify-icon">⚠️</span>
           <span>{error}</span>
-          <button className="notify-close" onClick={() => setError(null)}>×</button>
+          <button className="notify-close" onClick={() => setError(null)}>
+            ×
+          </button>
         </div>
       )}
 
       <div className="content-grid">
-        <div className="left-panel">
-          <DangerZoneStats
-            zones={zones}
-            severityCounts={severityCounts}
-            getSeverityColor={getSeverityColor}
-          />
-
+        <div className="top-panel">
           <DangerZoneFilters
             filterSeverity={filterSeverity}
             searchQuery={searchQuery}
             onFilterChange={setFilterSeverity}
             onSearchChange={setSearchQuery}
           />
+          <DangerZoneStats
+            zones={zones}
+            severityCounts={severityCounts}
+            getSeverityColor={getSeverityColor}
+          />
+        </div>
 
+        <div className="bottom-panel">
           <DangerZoneList
             zones={filteredZones}
             selectedZone={selectedZone}
@@ -277,9 +314,7 @@ const DangerZonePage = () => {
             getSeverityColor={getSeverityColor}
             getSeverityIcon={getSeverityIcon}
           />
-        </div>
 
-        <div className="right-panel">
           <DangerZoneMap
             zones={zones}
             selectedZone={selectedZone}
