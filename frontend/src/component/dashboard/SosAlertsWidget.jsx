@@ -76,7 +76,7 @@ const SosAlertsWidget = ({ sosAlerts = [] }) => {
       </div>
 
       <div className="activity-footer">
-        <button className="view-all-btn" onClick={() => navigate("/panic-alerts")}>View All Alerts</button>
+        <button className="view-all" onClick={() => navigate("/panic-alerts")}>View All Alerts</button>
       </div>
     </div>
   );
