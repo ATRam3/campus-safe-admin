@@ -227,17 +227,17 @@
 }
 
 .modal-container.small {
-  width: 400px;
+  min-width: 400px;
   max-width: 90vw;
 }
 
 .modal-container.medium {
-  width: 500px;
+  min-width: 500px;
   max-width: 90vw;
 }
 
 .modal-container.large {
-  width: 600px;
+  min-width: 600px;
   max-width: 90vw;
 }
 

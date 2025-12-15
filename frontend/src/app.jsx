@@ -17,7 +17,6 @@ import Announcements from "./pages/Announcements.jsx";
 import Users from "./pages/Users.jsx";
 
 import DangerZonePage from "./pages/DangerZonePage.jsx";
-import Settings from "./pages/Settings.jsx";
 import { io } from "socket.io-client";
 import { connectSocket, disconnectSocket, socket } from "./services/socket.js";
 import useAuth from "./hooks/useAuth.jsx";
@@ -32,7 +31,6 @@ const RequireAuth = ({ children }) => {
 
 const App = () => {
   const { user } = useAuth();
-  console.log("Current user:", user);
   //register admin as online when app loads
   useEffect(() => {
     if (!user) return;
@@ -70,7 +68,6 @@ const App = () => {
           <Route path="/announcements" element={<Announcements />} />
           <Route path="/users" element={<Users />} />
           <Route path="/analytics" element={<div>Analytics Page</div>} />
-          <Route path="/settings" element={<Settings />} />
         </Route>
       </Routes>
     </Router>

@@ -80,17 +80,16 @@
 
 /* Content Grid */
 .content-grid {
-  display: grid;
-  grid-template-columns: 380px 1fr;
   gap: 24px;
   flex: 1;
   min-height: 0;
 }
 
-.left-panel {
-  display: flex;
-  flex-direction: column;
+.top-panel {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
   gap: 24px;
+  margin-bottom: 24px;
 }
 
 /* Stats Cards */
@@ -219,14 +218,13 @@
 
 /* Zone List */
 .zone-list-container {
-  flex: 1;
   background: white;
-  border-radius: 12px;
-  padding: 20px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-  display: flex;
-  flex-direction: column;
-  min-height: 0;
+  border-radius: 16px;
+  padding: 24px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  overflow-y: scroll;
+  height: 70vh;
+  border: 1px solid rgba(226, 232, 240, 0.8);
 }
 
 .zone-list-header {
@@ -383,21 +381,25 @@
 }
 
 /* Right Panel */
-.right-panel {
+.bottom-panel {
   display: flex;
-  flex-direction: column;
   gap: 24px;
   min-height: 0;
 }
 
 .map-container {
   flex: 1;
-  background: white;
+  background: transparent;
   border-radius: 12px;
   overflow: hidden;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   position: relative;
-  min-height: 400px;
+}
+
+.map-controls {
+  position: absolute;
+  top: 20px;
+  right: 50px;
 }
 
 .map-loading,
@@ -481,23 +483,6 @@
   margin: 0;
   font-size: 16px;
   color: #2d3748;
-}
-
-.view-all-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  background: none;
-  border: none;
-  color: #4299e1;
-  font-size: 12px;
-  cursor: pointer;
-  padding: 4px 8px;
-  border-radius: 4px;
-}
-
-.view-all-btn:hover {
-  background: #ebf8ff;
 }
 
 .incidents-list {
@@ -856,6 +841,26 @@
   margin-top: 16px !important;
 }
 
+/* Animation */
+@keyframes slideFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Mobile */
+@media (max-width: 480px) {
+  .notify {
+    font-size: 13px;
+    padding: 12px;
+  }
+}
+
 /* Map Selection Modal */
 .map-selection-modal {
   display: flex;
@@ -1109,10 +1114,6 @@
 @media (max-width: 1200px) {
   .content-grid {
     grid-template-columns: 1fr;
-  }
-
-  .left-panel {
-    max-height: 500px;
   }
 }
 

@@ -1,21 +1,14 @@
-import React, { useState } from "react";
-import "../css/Login.css"; // import the CSS file
-import api from "../services/api";
 import { useNavigate } from "react-router-dom";
+import api from "../services/api";
+import LoginForm from "../component/form/LoginForm";
+import "../css/Login.css";
 
 const Login = () => {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
   const navigate = useNavigate();
-  const handleLogin = async (e) => {
-    e.preventDefault();
 
+  const handleLogin = async (values, { setSubmitting, setStatus }) => {
     try {
-      const response = await api.post("/auth/login", {
-        email,
-        password,
-      });
-      console.log("Login response:", response.data);
+      const response = await api.post("/auth/login", values);
       if (response.data) {
         // Store token in localStorage
         localStorage.setItem("token", response.data.data.token);
@@ -34,7 +27,9 @@ const Login = () => {
         navigate("/dashboard");
       }
     } catch (error) {
-      console.error("Login error:", error);
+      setStatus("Invalid credentials");
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -42,29 +37,9 @@ const Login = () => {
     <div className="login-container">
       <div className="login-box">
         <h1 className="login-title">SafeCampus Admin</h1>
-        <h2 className="login-subtitle">Login</h2>
+        <p className="login-subtitle">Secure Login</p>
 
-        <form onSubmit={handleLogin}>
-          <label>Email</label>
-          <input
-            type="email"
-            placeholder="admin@safecampus.com"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-          />
-
-          <label>Password</label>
-          <input
-            type="password"
-            placeholder="Enter your password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-          />
-
-          <button type="submit">Log In</button>
-        </form>
+        <LoginForm onSubmit={handleLogin} />
 
         <p className="footer-text">SafeCampus — Admin Portal</p>
       </div>

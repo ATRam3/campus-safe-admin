@@ -243,7 +243,7 @@
 
 .detail-info {
   display: flex;
-  flex-direction: column;
+  justify-content: space-between;
   gap: 20px;
 }
 
@@ -270,6 +270,14 @@
   font-size: 1rem;
 }
 
+.detail-info-img {
+  margin-right: 2rem;
+}
+
+.detail-info-img-title {
+  margin: 2rem 0 2rem 0;
+  font-weight: bold;
+}
 .status-chip.large {
   padding: 10px 24px;
   font-size: 0.9rem;
@@ -558,4 +566,84 @@
   font-weight: 600;
   margin-left: 12px;
   vertical-align: middle;
+}
+
+/* Container for the incident map */
+.incident-map-container {
+  width: 100%;
+  height: 300px; /* Fixed height for the detail panel */
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  margin: 1rem 0;
+  border: 1px solid #e5e7eb;
+}
+
+/* Loading and Error States */
+.map-loading,
+.map-error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: #6b7280;
+  text-align: center;
+  padding: 2rem;
+  background: #f9fafb;
+}
+
+.loading-spinner {
+  animation: spin 1s linear infinite;
+  margin-bottom: 1rem;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.map-error {
+  color: #dc2626;
+}
+
+/* Styling for the Google InfoWindow content */
+.incident-info-window {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  padding: 0.5rem;
+  min-width: 200px;
+  max-width: 250px;
+}
+
+.incident-info-window h4 {
+  margin: 0 0 0.5rem 0;
+  color: #111827;
+  font-size: 1rem;
+  line-height: 1.25;
+}
+
+.info-status {
+  margin: 0.25rem 0;
+  font-size: 0.875rem;
+}
+
+.info-description {
+  margin: 0.5rem 0;
+  font-size: 0.875rem;
+  color: #4b5563;
+  line-height: 1.4;
+}
+
+.info-coordinates {
+  margin: 0.5rem 0 0 0;
+  color: #9ca3af;
+  font-size: 0.75rem;
+}
+
+.detail-info {
+  display: flex;
 }

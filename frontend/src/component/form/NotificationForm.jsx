@@ -27,6 +27,7 @@ const NotificationForm = ({ onSubmit, loading, onCancel }) => {
         onSubmit(payload, formikHelpers);
         onCancel();
       }}
+      onChange={(e) => onFilterChange(e.target.value)}
     >
       {({ values, setFieldValue }) => (
         <Form className="announcement-form">
@@ -84,7 +85,7 @@ const NotificationForm = ({ onSubmit, loading, onCancel }) => {
           />
 
           {/* Delivery Mode (ONLY for announcements) */}
-          {values.type === "announcement" && (
+          {/* {values.type === "announcement" && (
             <>
               <label>Delivery *</label>
               <div className="radio-group">
@@ -106,7 +107,6 @@ const NotificationForm = ({ onSubmit, loading, onCancel }) => {
             </>
           )}
 
-          {/* Scheduled Time (ONLY if scheduled) */}
           {values.type === "announcement" &&
             values.scheduleMode === "schedule" && (
               <>
@@ -125,7 +125,7 @@ const NotificationForm = ({ onSubmit, loading, onCancel }) => {
                   className="error-message"
                 />
               </>
-            )}
+            )} */}
 
           {/* Submit + Cancel buttons */}
           <div style={{ display: "flex", gap: "10px", marginTop: "1rem" }}>
