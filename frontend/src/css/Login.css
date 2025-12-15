@@ -1,86 +1,124 @@
-/* Page background */
+/* Background */
 .login-container {
   min-height: 100vh;
   display: flex;
   justify-content: center;
   align-items: center;
-  background: #eef2f7;
+  background: linear-gradient(135deg, #eef2f7, #d9e2f3);
   padding: 20px;
 }
 
-/* White box */
+/* Card */
 .login-box {
-  background: white;
-  padding: 40px;
+  background: #ffffff;
+  padding: 42px;
   width: 100%;
-  max-width: 400px;
-  border-radius: 14px;
-  box-shadow: 0 6px 25px rgba(0, 0, 0, 0.1);
+  max-width: 420px;
+  border-radius: 16px;
+  box-shadow: 0 10px 35px rgba(0, 0, 0, 0.12);
+  animation: fadeIn 0.5s ease;
 }
 
 /* Titles */
 .login-title {
   text-align: center;
-  font-size: 28px;
+  font-size: 30px;
   font-weight: 700;
   color: #1f4fb9;
-  margin-bottom: 10px;
 }
 
 .login-subtitle {
   text-align: center;
-  font-size: 18px;
-  color: #555;
-  margin-bottom: 25px;
+  font-size: 15px;
+  color: #666;
+  margin: 10px 0 30px;
 }
 
-/* Form styles */
-form {
+/* Form */
+.login-form {
   display: flex;
   flex-direction: column;
+}
+
+.form-group {
+  margin-bottom: 18px;
 }
 
 label {
   font-size: 14px;
   color: #333;
   margin-bottom: 6px;
+  display: block;
 }
 
 input {
-  padding: 12px;
+  width: 100%;
+  padding: 12px 14px;
   border: 1px solid #d7d7d7;
-  border-radius: 8px;
+  border-radius: 10px;
   font-size: 15px;
-  margin-bottom: 20px;
-  transition: border 0.2s ease;
+  transition: all 0.25s ease;
 }
 
 input:focus {
   border-color: #1f4fb9;
+  box-shadow: 0 0 0 3px rgba(31, 79, 185, 0.15);
   outline: none;
+}
+
+/* Validation */
+span {
+  font-size: 12px;
+  margin-top: 4px;
+  display: block;
+}
+
+.form-error {
+  background: #ffe3e3;
+  color: #b00020;
+  padding: 10px;
+  border-radius: 8px;
+  font-size: 14px;
+  margin-bottom: 15px;
 }
 
 /* Button */
 button {
   background: #1f4fb9;
   color: white;
-  padding: 12px;
+  padding: 13px;
   border: none;
-  border-radius: 8px;
+  border-radius: 10px;
   font-size: 16px;
   cursor: pointer;
-  transition: background 0.25s ease;
-  margin-top: 10px;
+  transition: all 0.25s ease;
 }
 
 button:hover {
   background: #163a87;
 }
 
+button:disabled {
+  background: #9bb1e1;
+  cursor: not-allowed;
+}
+
 /* Footer */
 .footer-text {
   text-align: center;
-  margin-top: 25px;
+  margin-top: 28px;
   font-size: 13px;
-  color: #7a7a7a;
+  color: #777;
+}
+
+/* Animation */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
