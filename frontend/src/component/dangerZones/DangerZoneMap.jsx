@@ -15,7 +15,6 @@ import {
   Home,
   TriangleAlert,
 } from "lucide-react";
-import LocationImg from "../../assets/location.png";
 
 // Define libraries outside the component to prevent re-renders
 const libraries = ["places"];

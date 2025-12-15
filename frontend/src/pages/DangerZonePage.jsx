@@ -9,7 +9,6 @@ import DangerZoneMap from "../component/dangerZones/DangerZoneMap";
 import CreateZoneModal from "../component/dangerZones/CreateZoneModal";
 import MapSelectionModal from "../component/dangerZones/MapSelectionModal";
 import DeleteConfirmationModal from "../component/shared/DeleteConfirmationModal";
-import LocationImg from "../assets/location.png";
 
 // Import only needed icons
 import {
@@ -96,19 +95,6 @@ const DangerZonePage = () => {
         return "#34C759";
       default:
         return "#8E8E93";
-    }
-  };
-
-  const getMarkerIcon = (severity) => {
-    switch (severity) {
-      case "high":
-        return <img src={LocationImg} alt="High Severity" />;
-      case "medium":
-        return <img src={LocationImg} alt="Medium Severity" />;
-      case "low":
-        return <img src={LocationImg} alt="Low Severity" />;
-      default:
-        return "";
     }
   };
 
