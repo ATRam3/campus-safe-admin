@@ -7,9 +7,7 @@ const Login = () => {
   const navigate = useNavigate();
 
   const handleLogin = async (values, { setSubmitting, setStatus }) => {
-    let response;
     try {
-<<<<<<< HEAD
       const response = await api.post("/auth/login", {
         email,
         password,
@@ -32,20 +30,14 @@ const Login = () => {
         // Redirect to dashboard
         navigate("/dashboard");
       }
-=======
       response = await api.post("/auth/login", values);
 
       localStorage.setItem("token", response.data.data.token);
       localStorage.setItem("refreshToken", response.data.data.refreshToken);
-      localStorage.setItem(
-        "user",
-        JSON.stringify(response.data.data.user)
-      );
+      localStorage.setItem("user", JSON.stringify(response.data.data.user));
 
       navigate("/dashboard");
->>>>>>> 15c799ac51034aaf2b4e3792300543c9069610a9
     } catch (error) {
-      console.log("response:", response)
       setStatus("Invalid credentials");
     } finally {
       setSubmitting(false);

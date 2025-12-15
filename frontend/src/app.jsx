@@ -18,12 +18,18 @@ import Users from "./pages/Users.jsx";
 
 import DangerZonePage from "./pages/DangerZonePage.jsx";
 <<<<<<< HEAD
+<<<<<<< HEAD
 import Settings from "./pages/Settings.jsx";
 import { io } from "socket.io-client";
 import { connectSocket, disconnectSocket, socket } from "./services/socket.js";
 import useAuth from "./hooks/useAuth.jsx";
 =======
 >>>>>>> 15c799ac51034aaf2b4e3792300543c9069610a9
+=======
+import { io } from "socket.io-client";
+import { connectSocket, disconnectSocket, socket } from "./services/socket.js";
+import useAuth from "./hooks/useAuth.jsx";
+>>>>>>> 22fd00f45315b0f3b50c02aa308cee92cd74e319
 
 const RequireAuth = ({ children }) => {
   const token = localStorage.getItem("token");
@@ -35,7 +41,6 @@ const RequireAuth = ({ children }) => {
 
 const App = () => {
   const { user } = useAuth();
-  console.log("Current user:", user);
   //register admin as online when app loads
   useEffect(() => {
     if (!user) return;
