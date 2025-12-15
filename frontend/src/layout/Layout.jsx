@@ -39,15 +39,23 @@ const Layout = () => {
         }
 
         const response = await api.get("/profile", user);
-        setAdminData(response.data.data || []);
-        console.log("Fetched data:", response.data.data);
+        const responseData = response.data.data || [];
+        const storedData = JSON.parse(localStorage.getItem("admin"));
+
+        const resAdminData = {
+          fullName: storedData?.fullName,
+          email: responseData.email,
+          phone: storedData?.phone
+        }
+
+        setAdminData(resAdminData);
       } catch (error) {
         console.error("Error fetching profile data:", error);
       }
     };
 
     fetchAdminData();
-  }, [settingsModalOpen]);
+  }, []);
 
   const handleLogout = () => {
     navigate("/login", { replace: true });
@@ -170,7 +178,7 @@ const Layout = () => {
                     className="header-avatar"
                     alt="Admin"
                   />
-                  <span className="username">Admin User</span>
+                  <span className="username">{adminData?.fullName || "Admin User"}</span>
                   <span className="dropdown-arrow">▼</span>
                 </div>
 

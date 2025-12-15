@@ -1,230 +1,158 @@
-import React, { useState } from "react";
+import React, { useState } from 'react';
+import ProfileForm from '../form/ProfileForm';
+import "../../css/Profile.css"
 
 const ProfileSection = ({ adminData, setAdminData }) => {
     const [editMode, setEditMode] = useState(false);
-    const [editedData, setEditedData] = useState({ ...adminData });
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
-    const handleSaveChanges = () => {
-        setAdminData(editedData);
+    const handleSubmit = async (values, { setSubmitting }) => {
+        setIsSubmitting(true);
+
+        const updatedData = {
+            ...adminData,
+            ...values
+        };
+        const submitedData = {
+            fullName: updatedData.fullName,
+            email: updatedData.email,
+            phone: updatedData.phone
+        }
+
+        try {
+            // await new api.post("/profile", form);
+
+            setAdminData(updatedData);
+            setEditMode(false);
+
+            console.log("submitting...")
+            localStorage.setItem("admin", JSON.stringify(submitedData));
+        } catch (error) {
+            console.error('Failed to update profile:', error);
+        } finally {
+            setIsSubmitting(false);
+            setSubmitting(false);
+        }
+    };
+
+    const handleCancel = () => {
         setEditMode(false);
-        // Here you would typically make an API call
+    };
+
+    const formatDate = (dateString) => {
+        if (!dateString) return 'N/A';
+        return new Date(dateString).toLocaleDateString('en-US', {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric'
+        });
     };
 
     return (
         <div className="profile-section">
             <div className="profile-header">
-                <h4>👤 Admin Profile</h4>
+                <div className="profile-header-left">
+                    <h4>👤 Admin Profile</h4>
+                    <span className="profile-role-badge">
+                        {adminData.role || 'Administrator'}
+                    </span>
+                </div>
+
                 <button
                     className="edit-profile-btn"
-                    onClick={() => {
-                        setEditMode(!editMode);
-                        setEditedData({ ...adminData });
-                    }}
+                    onClick={() => setEditMode(!editMode)}
+                    disabled={isSubmitting}
                 >
-                    {editMode ? "Cancel" : "✏️ Edit"}
+                    {editMode ? (
+                        <>
+                            <span className="btn-icon">✕</span>
+                            Cancel Edit
+                        </>
+                    ) : (
+                        <>
+                            <span className="btn-icon">✏️</span>
+                            Edit Profile
+                        </>
+                    )}
                 </button>
             </div>
 
             <div className="profile-content">
                 <div className="profile-avatar-section">
-                    <img
-                        src={adminData.profilePhoto}
-                        alt="Admin"
-                        className="profile-avatar"
-                    />
-                    {editMode && (
-                        <button className="change-photo-btn">
-                            📷 Change Photo
-                        </button>
-                    )}
+                    <div className="avatar-wrapper">
+                        <div className="avatar-placeholder">
+                            {adminData.fullName?.charAt(0) || 'A'}
+                        </div>
+                    </div>
                 </div>
 
-                {editMode ? (
-                    <EditForm
-                        editedData={editedData}
-                        setEditedData={setEditedData}
-                        onCancel={() => setEditMode(false)}
-                        onSave={handleSaveChanges}
-                    />
-                ) : (
-                    <ProfileDetails adminData={adminData} />
-                )}
-            </div>
-        </div>
-    );
-};
+                <div className="profile-details-container">
+                    {editMode ? (
+                        <ProfileForm
+                            adminData={adminData}
+                            onCancel={handleCancel}
+                            onSubmit={handleSubmit}
+                            isSubmitting={isSubmitting}
+                        />
+                    ) : (
+                        <>
+                            <div className="profile-info-grid">
+                                <div className="info-card">
+                                    <h5>Personal Information</h5>
+                                    <div className="info-item">
+                                        <span className="info-label">Full Name:</span>
+                                        <span className="info-value">{adminData.fullName || 'Not set'}</span>
+                                    </div>
+                                    <div className="info-item">
+                                        <span className="info-label">Email:</span>
+                                        <span className="info-value">{adminData.email}</span>
+                                    </div>
+                                    <div className="info-item">
+                                        <span className="info-label">Phone:</span>
+                                        <span className="info-value">{adminData.phone || 'Not provided'}</span>
+                                    </div>
+                                </div>
 
-const EditForm = ({ editedData, setEditedData, onCancel, onSave }) => {
-    return (
-        <div className="edit-form">
-            <div className="form-group">
-                <label>Full Name</label>
-                <input
-                    type="text"
-                    value={editedData.name}
-                    onChange={(e) =>
-                        setEditedData({
-                            ...editedData,
-                            name: e.target.value,
-                        })
-                    }
-                />
-            </div>
+                                {adminData.department && (
+                                    <div className="info-card">
+                                        <h5>Work Information</h5>
+                                        <div className="info-item">
+                                            <span className="info-label">Department:</span>
+                                            <span className="info-value">{adminData.department}</span>
+                                        </div>
+                                        <div className="info-item">
+                                            <span className="info-label">Role:</span>
+                                            <span className="info-value">{adminData.role || 'Admin'}</span>
+                                        </div>
+                                        <div className="info-item">
+                                            <span className="info-label">Employee ID:</span>
+                                            <span className="info-value">{adminData.employeeId || 'N/A'}</span>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
 
-            <div className="form-group">
-                <label>Email Address</label>
-                <input
-                    type="email"
-                    value={editedData.email}
-                    onChange={(e) =>
-                        setEditedData({
-                            ...editedData,
-                            email: e.target.value,
-                        })
-                    }
-                />
-            </div>
-
-            <div className="form-group">
-                <label>Phone Number</label>
-                <input
-                    type="tel"
-                    value={editedData.phone}
-                    onChange={(e) =>
-                        setEditedData({
-                            ...editedData,
-                            phone: e.target.value,
-                        })
-                    }
-                />
-            </div>
-
-            <div className="form-group">
-                <label>Department</label>
-                <input
-                    type="text"
-                    value={editedData.department}
-                    onChange={(e) =>
-                        setEditedData({
-                            ...editedData,
-                            department: e.target.value,
-                        })
-                    }
-                />
-            </div>
-
-            <NotificationSettings
-                notifications={editedData.notifications}
-                onChange={(updatedNotifications) =>
-                    setEditedData({
-                        ...editedData,
-                        notifications: updatedNotifications,
-                    })
-                }
-            />
-
-            <div className="form-actions">
-                <button className="btn btn-secondary" onClick={onCancel}>
-                    Cancel
-                </button>
-                <button className="btn btn-primary" onClick={onSave}>
-                    💾 Save Changes
-                </button>
-            </div>
-        </div>
-    );
-};
-
-const NotificationSettings = ({ notifications, onChange }) => {
-    return (
-        <div className="notifications-section">
-            <h5>🔔 Notification Preferences</h5>
-            <div className="notification-options">
-                <label className="checkbox-label">
-                    <input
-                        type="checkbox"
-                        checked={notifications.email}
-                        onChange={(e) =>
-                            onChange({
-                                ...notifications,
-                                email: e.target.checked,
-                            })
-                        }
-                    />
-                    <span>Email Notifications</span>
-                </label>
-
-                <label className="checkbox-label">
-                    <input
-                        type="checkbox"
-                        checked={notifications.push}
-                        onChange={(e) =>
-                            onChange({
-                                ...notifications,
-                                push: e.target.checked,
-                            })
-                        }
-                    />
-                    <span>Push Notifications</span>
-                </label>
-
-                <label className="checkbox-label">
-                    <input
-                        type="checkbox"
-                        checked={notifications.sms}
-                        onChange={(e) =>
-                            onChange({
-                                ...notifications,
-                                sms: e.target.checked,
-                            })
-                        }
-                    />
-                    <span>SMS Alerts</span>
-                </label>
-            </div>
-        </div>
-    );
-};
-
-const ProfileDetails = ({ adminData }) => {
-    return (
-        <div className="profile-details">
-            <div className="detail-row">
-                <span className="detail-label">Name:</span>
-                <span className="detail-value">{adminData.name}</span>
-            </div>
-            <div className="detail-row">
-                <span className="detail-label">Email:</span>
-                <span className="detail-value">{adminData.email}</span>
-            </div>
-            <div className="detail-row">
-                <span className="detail-label">Phone:</span>
-                <span className="detail-value">{adminData.phone}</span>
-            </div>
-            <div className="detail-row">
-                <span className="detail-label">Department:</span>
-                <span className="detail-value">{adminData.department}</span>
-            </div>
-            <div className="detail-row">
-                <span className="detail-label">Role:</span>
-                <span className="detail-value">{adminData.role}</span>
-            </div>
-            <div className="detail-row">
-                <span className="detail-label">Joined:</span>
-                <span className="detail-value">{adminData.joinedDate}</span>
-            </div>
-
-            <div className="notifications-display">
-                <h5>🔔 Notification Settings</h5>
-                <div className="notification-status">
-                    {adminData.notifications.email && (
-                        <span className="status-badge active">📧 Email</span>
-                    )}
-                    {adminData.notifications.push && (
-                        <span className="status-badge active">📱 Push</span>
-                    )}
-                    {adminData.notifications.sms && (
-                        <span className="status-badge active">📞 SMS</span>
+                            <div className="profile-metadata">
+                                <div className="metadata-item">
+                                    <span className="metadata-label">Account Created:</span>
+                                    <span className="metadata-value">
+                                        {formatDate(adminData.createdAt)}
+                                    </span>
+                                </div>
+                                <div className="metadata-item">
+                                    <span className="metadata-label">Last Updated:</span>
+                                    <span className="metadata-value">
+                                        {formatDate(adminData.updatedAt) || 'Never'}
+                                    </span>
+                                </div>
+                                <div className="metadata-item">
+                                    <span className="metadata-label">Status:</span>
+                                    <span className="status-badge active">
+                                        ● Active
+                                    </span>
+                                </div>
+                            </div>
+                        </>
                     )}
                 </div>
             </div>
