@@ -75,6 +75,7 @@ const PanicAlertsPage = () => {
 
   useEffect(() => {
     const fetchAlerts = async () => {
+      console.log("API BASE URL:", apiClient.defaults.baseURL);
       const [unresolvedRes, resolvedRes] = await Promise.all([
         apiClient.get("/sos/unresolved"),
         apiClient.get("/sos/resolved"),
@@ -92,12 +93,13 @@ const PanicAlertsPage = () => {
         status,
         startedAt: event.timeStamp,
       });
+      console.log("Unresolved Formatted Alerts:", unresolvedRes);
 
-      const unresolvedFormatted = unresolvedRes.data.data.map((e) =>
+      const unresolvedFormatted = unresolvedRes.data.data.data.map((e) =>
         formatAlert(e, "active")
       );
 
-      const resolvedFormatted = resolvedRes.data.data.map((e) =>
+      const resolvedFormatted = resolvedRes.data.data.data.map((e) =>
         formatAlert(e, "resolved")
       );
 
