@@ -1,10 +1,17 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Link, useLocation, Outlet } from "react-router-dom";
 import "../css/Layout.css";
+import { useNavigate } from "react-router-dom"
+import Modal from "../component/shared/Modal"
+import ProfileSection from "../component/settings/ProfileSection";
+import api from "../services/api"
 
 const Layout = () => {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [settingsModalOpen, setSettingsModalOpen] = useState(false);
+  const [adminData, setAdminData] = useState(null);
   const location = useLocation();
+  const navigate = useNavigate();
 
   const menuItems = [
     { path: "/dashboard", icon: "📊", label: "Dashboard" },
@@ -13,8 +20,6 @@ const Layout = () => {
     { path: "/incidents", icon: "📋", label: "Incident Reports" },
     { path: "/announcements", icon: "📢", label: "Announcements" },
     { path: "/users", icon: "👥", label: "User Management" },
-    { path: "/analytics", icon: "📈", label: "Analytics" },
-    { path: "/settings", icon: "⚙️", label: "Settings" },
   ];
 
   const isActive = (path) => location.pathname === path;
@@ -22,6 +27,47 @@ const Layout = () => {
   // Detect title based on active route
   const currentPage = menuItems.find((item) => isActive(item.path));
   const pageTitle = currentPage ? currentPage.label : "";
+
+  //Fetch admin data
+  useEffect(() => {
+    const fetchAdminData = async () => {
+      try {
+        const user = JSON.parse(localStorage.getItem("user"));
+        if (!user) {
+          handleLogout();
+          throw new Error("User not found");
+        }
+
+        const response = await api.get("/profile", user);
+        const responseData = response.data.data || [];
+        const storedData = JSON.parse(localStorage.getItem("admin"));
+
+        const resAdminData = {
+          fullName: storedData?.fullName,
+          email: responseData.email,
+          phone: storedData?.phone
+        }
+
+        setAdminData(resAdminData);
+      } catch (error) {
+        console.error("Error fetching profile data:", error);
+      }
+    };
+
+    fetchAdminData();
+  }, []);
+
+  const handleLogout = () => {
+    navigate("/login", { replace: true });
+
+    // clear after navigation
+    setTimeout(() => {
+      localStorage.removeItem("token");
+      localStorage.removeItem("refreshToken");
+      localStorage.removeItem("user");
+    }, 0);
+  };
+
 
   return (
     <div className="admin-layout">
@@ -65,7 +111,19 @@ const Layout = () => {
               )}
             </Link>
           ))}
+
+          {/* Settings button that opens modal */}
+          <button
+            className="menu-item"
+            onClick={() => setSettingsModalOpen(true)}
+          >
+            <span className="menu-icon">⚙️</span>
+            {!sidebarCollapsed && (
+              <span className="menu-label">Settings</span>
+            )}
+          </button>
         </nav>
+
 
         {/* User Profile */}
         {!sidebarCollapsed && (
@@ -83,7 +141,7 @@ const Layout = () => {
                 <p>Administrator</p>
               </div>
 
-              <button className="logout-btn" title="Logout">
+              <button className="logout-btn" title="Logout" onClick={handleLogout}>
                 ↩️
               </button>
             </div>
@@ -111,17 +169,25 @@ const Layout = () => {
               <button className="notification-btn">
                 🔔 <span className="notification-count">3</span>
               </button>
-              <button className="quick-action-btn">🚨 Emergency</button>
+              {/* <button className="quick-action-btn">🚨 Emergency</button> */}
 
               <div className="user-dropdown">
-                <img
-                  src="https://api.dicebear.com/7.x/avataaars/svg?seed=Admin"
-                  className="header-avatar"
-                  alt="Admin"
-                />
-                <span className="username">Admin User</span>
-                <span className="dropdown-arrow">▼</span>
+                <div className="user-trigger">
+                  <img
+                    src="https://api.dicebear.com/7.x/avataaars/svg?seed=Admin"
+                    className="header-avatar"
+                    alt="Admin"
+                  />
+                  <span className="username">{adminData?.fullName || "Admin User"}</span>
+                  <span className="dropdown-arrow">▼</span>
+                </div>
+
+                <div className="user-menu">
+                  <button onClick={() => setSettingsModalOpen(true)}>Settings</button>
+                  <button className="logout-btn" onClick={handleLogout}>Logout</button>
+                </div>
               </div>
+
             </div>
           </div>
         </header>
@@ -131,6 +197,18 @@ const Layout = () => {
           <Outlet />
         </div>
       </div>
+
+      {/* Settings Modal */}
+      <Modal
+        isOpen={settingsModalOpen}
+        onClose={() => setSettingsModalOpen(false)}
+        title="⚙️ Settings"
+        size="xlarge"
+        children={<ProfileSection
+          adminData={adminData}
+          setAdminData={setAdminData}
+        />}
+      />
     </div>
   );
 };
