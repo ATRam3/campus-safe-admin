@@ -1,240 +1,296 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import {
   GoogleMap,
   Marker,
   InfoWindow,
+  Polyline,
   useLoadScript,
 } from "@react-google-maps/api";
+import dayjs from "dayjs";
+import relativeTime from "dayjs/plugin/relativeTime";
+import apiClient from "../services/api";
 import "../css/PanicAlertPage.css";
+import {
+  connectPanicAlertSocket,
+  disconnectPanicAlertSocket,
+  panicAlertSocket,
+} from "../services/panicAlertSockets";
 
-// Simple sample data
-const initialAlerts = [
-  {
-    id: 1,
-    name: "John Doe",
-    email: "john.doe@university.edu",
-    location: { lat: 8.8925, lng: 38.808 },
-    timestamp: "2 minutes ago",
-    message: "Emergency near library",
-    status: "active",
-  },
-  {
-    id: 2,
-    name: "Jane Smith",
-    email: "jane.smith@university.edu",
-    location: { lat: 8.893, lng: 38.807 },
-    timestamp: "15 minutes ago",
-    message: "Suspicious activity",
-    status: "active",
-  },
-  {
-    id: 3,
-    name: "Mike Johnson",
-    email: "mike.j@university.edu",
-    location: { lat: 8.891, lng: 38.809 },
-    timestamp: "1 hour ago",
-    message: "Medical emergency",
-    status: "resolved",
-  },
-  {
-    id: 4,
-    name: "Sarah Williams",
-    email: "sarah.w@university.edu",
-    location: { lat: 8.892, lng: 38.806 },
-    timestamp: "30 minutes ago",
-    message: "Accident in parking lot",
-    status: "active",
-  },
-];
+dayjs.extend(relativeTime);
+
+/* ================= CONSTANTS ================= */
+const MAP_CENTER = { lat: 8.8913, lng: 38.8089 };
+const MAP_ZOOM = 16;
+const MAX_HISTORY = 50;
+const MIN_DISTANCE_METERS = 8;
+const SMOOTH_STEPS = 6;
+const SMOOTH_INTERVAL = 50;
+
+/* ================= HELPERS ================= */
+
+const getDistanceInMeters = (a, b) => {
+  const R = 6371000;
+  const dLat = ((b.lat - a.lat) * Math.PI) / 180;
+  const dLng = ((b.lng - a.lng) * Math.PI) / 180;
+  const lat1 = (a.lat * Math.PI) / 180;
+  const lat2 = (b.lat * Math.PI) / 180;
+
+  const x =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos(lat1) * Math.cos(lat2) * Math.sin(dLng / 2) ** 2;
+
+  return 2 * R * Math.atan2(Math.sqrt(x), Math.sqrt(1 - x));
+};
+
+const interpolatePoints = (from, to, steps) =>
+  Array.from({ length: steps }, (_, i) => ({
+    lat: from.lat + ((to.lat - from.lat) * (i + 1)) / steps,
+    lng: from.lng + ((to.lng - from.lng) * (i + 1)) / steps,
+  }));
+
+/* ================= COMPONENT ================= */
 
 const PanicAlertsPage = () => {
   const { isLoaded } = useLoadScript({
-    googleMapsApiKey: "AIzaSyDGOfKLp0FxNKr6BxKHlJPKDcBWji1uGWI",
+    googleMapsApiKey: import.meta.env.VITE_GOOGLE_MAPS_KEY,
   });
 
-  const [alerts, setAlerts] = useState(initialAlerts);
-  const [resolved, setResolved] = useState(false);
+  const [alerts, setAlerts] = useState([]); // active alerts
   const [resolvedAlerts, setResolvedAlerts] = useState([]);
-  const [selectedAlert, setSelectedAlert] = useState(initialAlerts[0]);
-  const [mapCenter] = useState({ lat: 8.8913, lng: 38.8089 });
-  const [mapZoom] = useState(16);
+  const [selectedAlert, setSelectedAlert] = useState(null);
+  const [routeHistory, setRouteHistory] = useState([]);
+  const [showResolved, setShowResolved] = useState(false);
 
-  //get All panic alerts
-  useEffect(() => {
-       const fetchAlerts = async () => {
-        const response = await fetch('/api/panic-alerts');
-        const data = await response.json();
-        setAlerts(data);
-        
-         // Here you would typically make an API call to fetch real panic alerts
-         // For this example, we're using the initialAlerts defined above
-         setAlerts(initialAlerts);
-       };
-       fetchAlerts();
-     }, []);
+  const mapRef = useRef(null);
+  const activePanicIdRef = useRef(null);
+  const animationRef = useRef(null);
 
-  // Handle alert click
-  const handleAlertClick = (alert) => {
-    setSelectedAlert(alert);
+  /* ================= MAP ================= */
+
+  const onMapLoad = (map) => {
+    mapRef.current = map;
   };
 
-  const toggleAlertStatus = (alertId) => {
-    setAlerts((prevAlerts) =>
-      prevAlerts.map((alert) => {
-        if (alert.id === alertId) {
-          const newStatus = alert.status === "active" ? "resolved" : "active";
-          return { ...alert, status: newStatus };
-        }
-        return alert;
-      })
-    );
+  /* ================= FETCH ALERTS ================= */
 
-    // Also update selectedAlert if it's the one being toggled
-    if (selectedAlert && selectedAlert.id === alertId) {
-      setSelectedAlert((prev) => ({
+  useEffect(() => {
+    const fetchAlerts = async () => {
+      console.log("API BASE URL:", apiClient.defaults.baseURL);
+      const [unresolvedRes, resolvedRes] = await Promise.all([
+        apiClient.get("/sos/unresolved"),
+        apiClient.get("/sos/resolved"),
+      ]);
+
+      const formatAlert = (event, status) => ({
+        id: event._id,
+        name: event.userId?.fullName || "Unknown",
+        email: event.userId?.email || "N/A",
+        location: {
+          lat: event.location.coordinates[1],
+          lng: event.location.coordinates[0],
+        },
+        message: event.message || "Emergency alert",
+        status,
+        startedAt: event.timeStamp,
+      });
+      console.log("Unresolved Formatted Alerts:", unresolvedRes);
+
+      const unresolvedFormatted = unresolvedRes.data.data.data.map((e) =>
+        formatAlert(e, "active")
+      );
+
+      const resolvedFormatted = resolvedRes.data.data.data.map((e) =>
+        formatAlert(e, "resolved")
+      );
+
+      unresolvedFormatted.sort(
+        (a, b) => new Date(b.startedAt) - new Date(a.startedAt)
+      );
+      resolvedFormatted.sort(
+        (a, b) => new Date(b.startedAt) - new Date(a.startedAt)
+      );
+
+      setAlerts(unresolvedFormatted);
+      setResolvedAlerts(resolvedFormatted);
+    };
+
+    fetchAlerts();
+  }, []);
+
+  /* ================= SOCKET ================= */
+
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    connectPanicAlertSocket(token);
+    return () => disconnectPanicAlertSocket();
+  }, []);
+
+  /* ================= REAL-TIME TRACKING ================= */
+
+  const handleShowRealTimeLocation = (alert) => {
+    if (activePanicIdRef.current) {
+      panicAlertSocket.off(`panic:${activePanicIdRef.current}`);
+    }
+
+    activePanicIdRef.current = alert.id;
+    setSelectedAlert(alert);
+
+    const historyKey = `panic_history_${alert.id}`;
+    const storedHistory = JSON.parse(localStorage.getItem(historyKey)) || [];
+    setRouteHistory(storedHistory);
+
+    panicAlertSocket.on(`panic:${alert.id}`, (data) => {
+      const newPoint = {
+        lat: data.location.latitude,
+        lng: data.location.longitude,
+      };
+
+      setSelectedAlert((prev) => {
+        if (!prev) return prev;
+
+        const distance = getDistanceInMeters(prev.location, newPoint);
+        if (distance < MIN_DISTANCE_METERS) return prev;
+
+        const steps = interpolatePoints(prev.location, newPoint, SMOOTH_STEPS);
+
+        clearTimeout(animationRef.current);
+
+        steps.forEach((point, index) => {
+          animationRef.current = setTimeout(() => {
+            setSelectedAlert((p) => (p ? { ...p, location: point } : p));
+            mapRef.current?.panTo(point);
+          }, index * SMOOTH_INTERVAL);
+        });
+
+        return prev;
+      });
+
+      setRouteHistory((prev) => {
+        const last = prev[prev.length - 1];
+        if (last && getDistanceInMeters(last, newPoint) < MIN_DISTANCE_METERS) {
+          return prev;
+        }
+
+        const updated = [...prev, newPoint].slice(-MAX_HISTORY);
+        localStorage.setItem(historyKey, JSON.stringify(updated));
+        return updated;
+      });
+    });
+  };
+
+  /* ================= RESOLVE ================= */
+
+  const resolveAlert = async (alertId) => {
+    await apiClient.put(`/sos/update/${alertId}`);
+
+    setAlerts((prev) => prev.filter((a) => a.id !== alertId));
+
+    const resolved = alerts.find((a) => a.id === alertId);
+    if (resolved) {
+      setResolvedAlerts((prev) => [
+        { ...resolved, status: "resolved" },
         ...prev,
-        status: prev.status === "active" ? "resolved" : "active",
-      }));
+      ]);
+    }
+
+    if (selectedAlert?.id === alertId) {
+      setSelectedAlert((prev) => ({ ...prev, status: "resolved" }));
     }
   };
 
+  /* ================= RENDER ================= */
+
   return (
     <div className="panic-alerts-container">
-      {/* Page Title */}
       <div className="page-title">
         <h1>🚨 Panic Alerts</h1>
-        <p>Active emergency notifications from campus</p>
+        <p>Live emergency tracking dashboard</p>
       </div>
 
       <div className="alerts-content">
-        {/* Left Side - Alerts List */}
+        {/* LEFT PANEL */}
         <div className="alerts-list-section">
-          <div className="alerts-header">
-            <h3>Recent Alerts ({alerts.length})</h3>
-            <div className="filter-buttons">
-              <button className="filter-btn active">All</button>
-              <button className="filter-btn">Active</button>
-              <button className="filter-btn">Resolved</button>
-            </div>
+          <div className="alerts-tabs">
+            <button
+              className={`filter-btn ${
+                !showResolved ? "filter-btn--active" : ""
+              }`}
+              onClick={() => setShowResolved(false)}
+            >
+              Active Alerts
+            </button>
+
+            <button
+              className={`filter-btn ${
+                showResolved ? "filter-btn--active" : ""
+              }`}
+              onClick={() => setShowResolved(true)}
+            >
+              Resolved Alerts
+            </button>
           </div>
 
-          <div className="alerts-list">
-            {alerts.map((alert) => (
-              <div
-                key={alert.id}
-                className={`alert-card ${
-                  selectedAlert?.id === alert.id ? "selected" : ""
-                }`}
-                onClick={() => handleAlertClick(alert)}
-              >
-                <div className="alert-status" data-status={alert.status}></div>
-                <div className="alert-content">
-                  <div className="alert-header">
-                    <h4>{alert.name}</h4>
-                    <span className="alert-time">{alert.timestamp}</span>
-                  </div>
-                  <p className="alert-email">📧 {alert.email}</p>
-                  <p className="alert-location">
-                    📍 Lat: {alert.location.lat.toFixed(4)}, Lng:{" "}
-                    {alert.location.lng.toFixed(4)}
-                  </p>
-                  <p className="alert-message">{alert.message}</p>
-                </div>
-              </div>
-            ))}
-          </div>
+          {(showResolved ? resolvedAlerts : alerts).map((alert) => (
+            <div
+              key={alert.id}
+              className={`alert-card ${
+                selectedAlert?.id === alert.id ? "selected" : ""
+              }`}
+              onClick={() => handleShowRealTimeLocation(alert)}
+            >
+              <h4>{alert.name}</h4>
+              <p>{dayjs(alert.startedAt).fromNow()}</p>
+              <p>{alert.email}</p>
+            </div>
+          ))}
         </div>
 
-        {/* Right Side - Map */}
+        {/* MAP */}
         <div className="map-section">
           {!isLoaded ? (
-            <div className="map-loading">Loading map...</div>
+            <div>Loading map…</div>
           ) : (
             <>
               <GoogleMap
+                onLoad={onMapLoad}
                 mapContainerClassName="map-container"
-                center={selectedAlert?.location || mapCenter}
-                zoom={mapZoom}
+                center={selectedAlert?.location || MAP_CENTER}
+                zoom={MAP_ZOOM}
               >
-                {/* Marker for selected alert */}
-                {selectedAlert && (
-                  <Marker
-                    position={selectedAlert.location}
-                    onClick={() => {}}
+                {routeHistory.length > 1 && (
+                  <Polyline
+                    path={routeHistory}
+                    options={{
+                      strokeColor: "#FF0000",
+                      strokeOpacity: 0.7,
+                      strokeWeight: 4,
+                    }}
                   />
                 )}
 
-                {/* Info Window for selected alert */}
+                {selectedAlert && selectedAlert.status === "active" && (
+                  <Marker position={selectedAlert.location} />
+                )}
+
                 {selectedAlert && (
-                  <InfoWindow
-                    position={selectedAlert.location}
-                    onCloseClick={() => setSelectedAlert(null)}
-                  >
-                    <div className="info-window">
+                  <InfoWindow position={selectedAlert.location}>
+                    <div>
                       <h4>{selectedAlert.name}</h4>
-                      <p>
-                        <strong>Email:</strong> {selectedAlert.email}
-                      </p>
-                      <p>
-                        <strong>Location:</strong>
-                      </p>
-                      <p>Lat: {selectedAlert.location.lat.toFixed(6)}</p>
-                      <p>Lng: {selectedAlert.location.lng.toFixed(6)}</p>
-                      <p>
-                        <strong>Status:</strong> {selectedAlert.status}
-                      </p>
+                      <p>{selectedAlert.email}</p>
+                      <p>Status: {selectedAlert.status}</p>
                     </div>
                   </InfoWindow>
                 )}
               </GoogleMap>
 
-              {/* Selected Alert Details */}
               {selectedAlert && (
                 <div className="alert-details">
-                  <div className="container">
-                    <h3>Selected Alert Details</h3>
-                    <button
-                      className="status-toggle-btn"
-                      onClick={() => toggleAlertStatus(selectedAlert.id)}
-                    >
-                      Mark as{" "}
-                      {selectedAlert.status === "active"
-                        ? "Resolved"
-                        : "Active"}
-                    </button>
-                  </div>
-
-                  <div className="details-grid">
-                    <div className="detail-item">
-                      <label>Name:</label>
-                      <span>{selectedAlert.name}</span>
-                    </div>
-                    <div className="detail-item">
-                      <label>Email:</label>
-                      <span>{selectedAlert.email}</span>
-                    </div>
-                    <div className="detail-item">
-                      <label>Latitude:</label>
-                      <span>{selectedAlert.location.lat.toFixed(6)}</span>
-                    </div>
-                    <div className="detail-item">
-                      <label>Longitude:</label>
-                      <span>{selectedAlert.location.lng.toFixed(6)}</span>
-                    </div>
-                    <div className="detail-item">
-                      <label>Time:</label>
-                      <span>{selectedAlert.timestamp}</span>
-                    </div>
-                    <div className="detail-item">
-                      <label>Status:</label>
-                      <span className={`status-badge ${selectedAlert.status}`}>
-                        {selectedAlert.status}
-                      </span>
-                    </div>
-                  </div>
-                  <p className="alert-message-full">
-                    <strong>Message:</strong> {selectedAlert.message}
-                  </p>
+                  <button
+                    disabled={selectedAlert.status === "resolved"}
+                    onClick={() => resolveAlert(selectedAlert.id)}
+                  >
+                    Mark as Resolved
+                  </button>
                 </div>
               )}
             </>

@@ -7,20 +7,26 @@ const Login = () => {
   const navigate = useNavigate();
 
   const handleLogin = async (values, { setSubmitting, setStatus }) => {
-    let response;
     try {
-      response = await api.post("/auth/login", values);
-
-      localStorage.setItem("token", response.data.data.token);
-      localStorage.setItem("refreshToken", response.data.data.refreshToken);
-      localStorage.setItem(
-        "user",
-        JSON.stringify(response.data.data.user)
-      );
-
-      navigate("/dashboard");
+      const response = await api.post("/auth/login", values);
+      if (response.data) {
+        // Store token in localStorage
+        localStorage.setItem("token", response.data.data.token);
+        localStorage.setItem("refreshToken", response.data.data.refreshToken);
+        //store user info
+        localStorage.setItem(
+          "user",
+          JSON.stringify({
+            id: response.data.data.user._id,
+            fullName: response.data.data.user.fullName,
+            email: response.data.data.user.email,
+            role: response.data.data.user.role,
+          })
+        );
+        // Redirect to dashboard
+        navigate("/dashboard");
+      }
     } catch (error) {
-      console.log("response:", response)
       setStatus("Invalid credentials");
     } finally {
       setSubmitting(false);

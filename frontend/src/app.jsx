@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import {
   BrowserRouter as Router,
   Routes,
@@ -17,6 +17,9 @@ import Announcements from "./pages/Announcements.jsx";
 import Users from "./pages/Users.jsx";
 
 import DangerZonePage from "./pages/DangerZonePage.jsx";
+import { io } from "socket.io-client";
+import { connectSocket, disconnectSocket, socket } from "./services/socket.js";
+import useAuth from "./hooks/useAuth.jsx";
 
 const RequireAuth = ({ children }) => {
   const token = localStorage.getItem("token");
@@ -27,6 +30,23 @@ const RequireAuth = ({ children }) => {
 };
 
 const App = () => {
+  const { user } = useAuth();
+  //register admin as online when app loads
+  useEffect(() => {
+    if (!user) return;
+    const token = localStorage.getItem("token");
+    connectSocket(token);
+    console.log("Connecting socket with token:", token, user);
+    socket.on("connect", () => {
+      console.log("Admin -", user.email, "socket connected");
+      socket.emit("register_online", user.id);
+    });
+
+    return () => {
+      //disconnect on unmount
+      disconnectSocket();
+    };
+  }, [user]);
   return (
     <Router>
       <Routes>
