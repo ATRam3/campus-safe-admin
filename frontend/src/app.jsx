@@ -17,7 +17,6 @@ import Announcements from "./pages/Announcements.jsx";
 import Users from "./pages/Users.jsx";
 
 import DangerZonePage from "./pages/DangerZonePage.jsx";
-import Settings from "./pages/Settings.jsx";
 
 const RequireAuth = ({ children }) => {
   const token = localStorage.getItem("token");
@@ -49,7 +48,6 @@ const App = () => {
           <Route path="/announcements" element={<Announcements />} />
           <Route path="/users" element={<Users />} />
           <Route path="/analytics" element={<div>Analytics Page</div>} />
-          <Route path="/settings" element={<Settings />} />
         </Route>
       </Routes>
     </Router>
