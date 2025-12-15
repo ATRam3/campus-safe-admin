@@ -480,7 +480,7 @@
   padding: 24px;
 }
 
-.user-profile {
+.user-details-content .user-profile {
   display: flex;
   flex-direction: column;
   text-align: center;
@@ -489,7 +489,7 @@
   border-bottom: 1px solid var(--gray-200);
 }
 
-.avatar-large {
+.user-details-content .avatar-large {
   width: 80px;
   height: 80px;
   border-radius: 50%;
@@ -619,7 +619,7 @@
   animation: fadeIn 0.2s ease;
 }
 
-.modal-container {
+/* .modal-container {
   background: white;
   border-radius: var(--radius-lg);
   max-width: 500px;
@@ -635,7 +635,7 @@
 
 .modal-container.large {
   max-width: 600px;
-}
+} */
 
 .modal-header {
   padding: 20px 24px;
